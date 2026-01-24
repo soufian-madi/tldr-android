@@ -31,19 +31,21 @@ The key differentiator: **the more clickbaity the article, the shorter the respo
 - **UI:** Jetpack Compose with Material 3 + Dynamic Colors
 - **Min SDK:** 30 (Android 11)
 - **Target SDK:** 36
-- **AI Integration:** TBD (Phase 2)
-- **Networking:** TBD (Phase 2)
+- **AI:** Claude API (claude-sonnet-4-20250514)
+- **Networking:** OkHttp
 
 ## Project Structure
 
 ```
 app/src/main/java/com/example/tldr_ai/
-├── MainActivity.kt              # Entry point
+├── MainActivity.kt
 ├── data/
+│   ├── api/
+│   │   └── ClaudeApiService.kt    # Claude API client
 │   ├── model/
-│   │   └── SummaryResult.kt     # Data models & UI state
+│   │   └── SummaryResult.kt       # Data models & UI state
 │   └── repository/
-│       └── SummaryRepository.kt # AI integration (TODO)
+│       └── SummaryRepository.kt   # Repository layer
 └── ui/
     ├── components/
     │   ├── ClickbaitIndicator.kt  # Visual clickbait score
@@ -51,10 +53,9 @@ app/src/main/java/com/example/tldr_ai/
     │   └── SummaryCard.kt         # Result display card
     ├── screens/
     │   └── MainScreen.kt          # Main UI screen
+    ├── viewmodel/
+    │   └── MainViewModel.kt       # UI state management
     └── theme/
-        ├── Color.kt
-        ├── Theme.kt
-        └── Type.kt
 ```
 
 ## Current Status
@@ -64,21 +65,29 @@ app/src/main/java/com/example/tldr_ai/
 - [x] Input modes: URL and paste text (tabbed)
 - [x] Clickbait indicator (color-coded progress bar)
 - [x] Summary card with copy/share actions
-- [x] Mock responses for UI testing
 
-### Phase 2 (Next)
-- [ ] Add ViewModel with StateFlow
-- [ ] Implement AI service integration
+### Phase 2 (Complete)
+- [x] ViewModel with StateFlow
+- [x] Claude API integration
+- [x] AI-powered clickbait detection and summarization
+
+### Phase 3 (Future)
 - [ ] URL fetching and article parsing
-- [ ] Clickbait detection algorithm
-- [ ] Error handling
+- [ ] History/saved summaries
+- [ ] Better error handling and retry logic
 
 ## Git Conventions
 
 - Commit messages must be 100 characters or less
 
-## Build & Run
+## Setup
 
+1. Add your Claude API key to `local.properties`:
+```properties
+CLAUDE_API_KEY=sk-ant-xxxxx
+```
+
+2. Build and run:
 ```bash
 ./gradlew assembleDebug
 ./gradlew installDebug
@@ -86,7 +95,5 @@ app/src/main/java/com/example/tldr_ai/
 
 ## Environment
 
-API keys should be stored in `.env` file (gitignored):
-```
-AI_API_KEY=your_key_here
-```
+- API key is loaded from `local.properties` (gitignored) via BuildConfig
+- Never commit API keys to the repository

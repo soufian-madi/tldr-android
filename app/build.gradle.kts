@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -17,6 +19,15 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // Load API key from local.properties
+        val localProperties = rootProject.file("local.properties")
+        val apiKey = if (localProperties.exists()) {
+            val props = Properties()
+            localProperties.inputStream().use { stream -> props.load(stream) }
+            props.getProperty("CLAUDE_API_KEY", "")
+        } else ""
+        buildConfigField("String", "CLAUDE_API_KEY", "\"$apiKey\"")
     }
 
     buildTypes {
@@ -34,6 +45,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -46,6 +58,9 @@ dependencies {
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(libs.okhttp)
+    implementation(libs.gson)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
