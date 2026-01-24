@@ -79,6 +79,7 @@ app/src/main/java/com/example/tldr_ai/
 ## Git Conventions
 
 - Commit messages must be 100 characters or less
+- Always commit after making code changes, without waiting for explicit prompting
 
 ## Setup
 
