@@ -5,17 +5,20 @@
 # For more details, see
 #   http://developer.android.com/guide/developing/tools/proguard.html
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+# Keep Gson data classes used for API communication
+-keep class com.example.tldr_ai.data.api.ClaudeRequest { *; }
+-keep class com.example.tldr_ai.data.api.Message { *; }
+-keep class com.example.tldr_ai.data.api.ClaudeResponse { *; }
+-keep class com.example.tldr_ai.data.api.ContentBlock { *; }
+-keep class com.example.tldr_ai.data.api.ClaudeSummaryResponse { *; }
+-keep class com.example.tldr_ai.data.model.SummaryResult { *; }
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
+# Keep Gson annotations
+-keepattributes Signature
+-keepattributes *Annotation*
 
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+# Gson specific rules
+-keep class com.google.gson.** { *; }
+-keep class * implements com.google.gson.TypeAdapterFactory
+-keep class * implements com.google.gson.JsonSerializer
+-keep class * implements com.google.gson.JsonDeserializer
