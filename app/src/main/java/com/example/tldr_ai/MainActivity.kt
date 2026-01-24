@@ -38,7 +38,10 @@ class MainActivity : ComponentActivity() {
 
     private fun getSharedText(intent: Intent?): String? {
         if (intent?.action == Intent.ACTION_SEND && intent.type == "text/plain") {
-            return intent.getStringExtra(Intent.EXTRA_TEXT)
+            val sharedText = intent.getStringExtra(Intent.EXTRA_TEXT) ?: return null
+            val lines = sharedText.trim().lines()
+            // Google News shares "Title\nURL" - extract just the URL
+            return if (lines.size == 2) lines[1].trim() else sharedText
         }
         return null
     }
