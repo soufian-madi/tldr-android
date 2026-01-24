@@ -25,10 +25,7 @@ class MainViewModel(
 
             val result = when (mode) {
                 InputMode.TEXT -> repository.summarizeFromText(input)
-                InputMode.URL -> {
-                    // URL mode not implemented yet - treat URL as text for now
-                    Result.failure(Exception("URL fetching not implemented. Please paste article text instead."))
-                }
+                InputMode.URL -> repository.summarizeFromUrl(input)
             }
 
             _uiState.value = result.fold(

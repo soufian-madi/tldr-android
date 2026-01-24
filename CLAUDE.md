@@ -31,7 +31,7 @@ The key differentiator: **the more clickbaity the article, the shorter the respo
 - **UI:** Jetpack Compose with Material 3 + Dynamic Colors
 - **Min SDK:** 30 (Android 11)
 - **Target SDK:** 36
-- **AI:** Claude API (claude-sonnet-4-20250514)
+- **AI:** Claude API (claude-opus-4-5-20251101)
 - **Networking:** OkHttp
 
 ## Project Structure
@@ -71,8 +71,8 @@ app/src/main/java/com/example/tldr_ai/
 - [x] Claude API integration
 - [x] AI-powered clickbait detection and summarization
 
-### Phase 3 (Future)
-- [ ] URL fetching and article parsing
+### Phase 3 (In Progress)
+- [x] URL fetching with HTML preprocessing
 - [ ] History/saved summaries
 - [ ] Better error handling and retry logic
 

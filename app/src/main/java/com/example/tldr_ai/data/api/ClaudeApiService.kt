@@ -26,8 +26,83 @@ class ClaudeApiService {
 
     companion object {
         private const val API_URL = "https://api.anthropic.com/v1/messages"
-        private const val MODEL = "claude-sonnet-4-20250514"
+        private const val MODEL = "claude-opus-4-5-20251101"
         private const val API_VERSION = "2023-06-01"
+    }
+
+    /**
+     * Fetches content from a URL and returns preprocessed HTML.
+     */
+    suspend fun fetchUrl(url: String): Result<String> = withContext(Dispatchers.IO) {
+        try {
+            val request = Request.Builder()
+                .url(url)
+                .addHeader("User-Agent", "Mozilla/5.0 (Android; Mobile) TL;DR App")
+                .get()
+                .build()
+
+            val response = client.newCall(request).execute()
+            val body = response.body?.string()
+
+            if (!response.isSuccessful) {
+                return@withContext Result.failure(
+                    Exception("Failed to fetch URL: ${response.code}")
+                )
+            }
+
+            if (body.isNullOrBlank()) {
+                return@withContext Result.failure(Exception("Empty response from URL"))
+            }
+
+            Result.success(preprocessHtml(body))
+        } catch (e: Exception) {
+            Result.failure(Exception("Failed to fetch URL: ${e.message}"))
+        }
+    }
+
+    /**
+     * Preprocesses HTML to reduce token usage by removing non-content elements.
+     */
+    private fun preprocessHtml(html: String): String {
+        var cleaned = html
+
+        // Remove script tags and content
+        cleaned = cleaned.replace(Regex("<script[^>]*>[\\s\\S]*?</script>", RegexOption.IGNORE_CASE), "")
+
+        // Remove style tags and content
+        cleaned = cleaned.replace(Regex("<style[^>]*>[\\s\\S]*?</style>", RegexOption.IGNORE_CASE), "")
+
+        // Remove navigation elements
+        cleaned = cleaned.replace(Regex("<nav[^>]*>[\\s\\S]*?</nav>", RegexOption.IGNORE_CASE), "")
+
+        // Remove header elements (site headers, not article headers)
+        cleaned = cleaned.replace(Regex("<header[^>]*>[\\s\\S]*?</header>", RegexOption.IGNORE_CASE), "")
+
+        // Remove footer elements
+        cleaned = cleaned.replace(Regex("<footer[^>]*>[\\s\\S]*?</footer>", RegexOption.IGNORE_CASE), "")
+
+        // Remove aside elements (sidebars)
+        cleaned = cleaned.replace(Regex("<aside[^>]*>[\\s\\S]*?</aside>", RegexOption.IGNORE_CASE), "")
+
+        // Remove HTML comments
+        cleaned = cleaned.replace(Regex("<!--[\\s\\S]*?-->"), "")
+
+        // Remove SVG elements
+        cleaned = cleaned.replace(Regex("<svg[^>]*>[\\s\\S]*?</svg>", RegexOption.IGNORE_CASE), "")
+
+        // Remove noscript tags
+        cleaned = cleaned.replace(Regex("<noscript[^>]*>[\\s\\S]*?</noscript>", RegexOption.IGNORE_CASE), "")
+
+        // Remove form elements
+        cleaned = cleaned.replace(Regex("<form[^>]*>[\\s\\S]*?</form>", RegexOption.IGNORE_CASE), "")
+
+        // Remove iframe elements
+        cleaned = cleaned.replace(Regex("<iframe[^>]*>[\\s\\S]*?</iframe>", RegexOption.IGNORE_CASE), "")
+
+        // Remove excessive whitespace
+        cleaned = cleaned.replace(Regex("\\s+"), " ")
+
+        return cleaned.trim()
     }
 
     /**
@@ -83,7 +158,7 @@ class ClaudeApiService {
 
     private fun buildPrompt(articleText: String): String {
         return """
-Analyze this article and provide:
+Analyze this article content and provide:
 1. A clickbait score from 0-100 (0 = purely informative, 100 = extreme clickbait)
 2. A summary whose length depends on the clickbait score:
    - Score 0-30 (informative): Provide a short paragraph or bullet points
@@ -97,10 +172,12 @@ Clickbait signals to look for:
 - Question headlines with obvious answers
 - "This one trick" / "what happened next" patterns
 
+Note: The content may be HTML from a webpage. Extract and focus on the main article content, ignoring any remaining navigation, ads, or boilerplate text.
+
 Respond in this exact JSON format:
 {"clickbait_score": <number>, "title": "<extracted or inferred title>", "summary": "<your summary>"}
 
-Article text:
+Article content:
 $articleText
         """.trimIndent()
     }
