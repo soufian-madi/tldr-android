@@ -1,6 +1,5 @@
 package com.example.tldr_ai
 
-import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -17,9 +16,6 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        // Extract shared text if app was opened via share intent
-        val sharedUrl = getSharedText(intent)
-
         setContent {
             TldraiTheme {
                 val viewModel: MainViewModel = viewModel()
@@ -27,22 +23,11 @@ class MainActivity : ComponentActivity() {
 
                 MainScreen(
                     uiState = uiState,
-                    initialUrl = sharedUrl,
                     onSummarize = { mode, input ->
                         viewModel.summarize(mode, input)
                     }
                 )
             }
         }
-    }
-
-    private fun getSharedText(intent: Intent?): String? {
-        if (intent?.action == Intent.ACTION_SEND && intent.type == "text/plain") {
-            val sharedText = intent.getStringExtra(Intent.EXTRA_TEXT) ?: return null
-            val lines = sharedText.trim().lines()
-            // Google News shares "Title\nURL" - extract just the URL
-            return if (lines.size == 2) lines[1].trim() else sharedText
-        }
-        return null
     }
 }
