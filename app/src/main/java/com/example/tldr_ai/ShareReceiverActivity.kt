@@ -5,7 +5,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
 import androidx.activity.ComponentActivity
-import com.example.tldr_ai.bubble.FloatingBubbleService
+import com.example.tldr_ai.floatingcard.FloatingCardService
 
 class ShareReceiverActivity : ComponentActivity() {
 
@@ -15,7 +15,7 @@ class ShareReceiverActivity : ComponentActivity() {
         val sharedUrl = getSharedText(intent)
         if (sharedUrl != null) {
             if (Settings.canDrawOverlays(this)) {
-                startBubbleService(sharedUrl)
+                startCardService(sharedUrl)
                 finish()
             } else {
                 // Request overlay permission
@@ -37,16 +37,16 @@ class ShareReceiverActivity : ComponentActivity() {
             if (Settings.canDrawOverlays(this)) {
                 val sharedUrl = getSharedText(intent)
                 if (sharedUrl != null) {
-                    startBubbleService(sharedUrl)
+                    startCardService(sharedUrl)
                 }
             }
             finish()
         }
     }
 
-    private fun startBubbleService(url: String) {
-        val serviceIntent = Intent(this, FloatingBubbleService::class.java).apply {
-            putExtra(FloatingBubbleService.EXTRA_URL, url)
+    private fun startCardService(url: String) {
+        val serviceIntent = Intent(this, FloatingCardService::class.java).apply {
+            putExtra(FloatingCardService.EXTRA_URL, url)
         }
         startForegroundService(serviceIntent)
     }

@@ -1,4 +1,4 @@
-package com.example.tldr_ai.bubble
+package com.example.tldr_ai.floatingcard
 
 import android.annotation.SuppressLint
 import android.app.Notification
@@ -29,10 +29,10 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-class FloatingBubbleService : Service() {
+class FloatingCardService : Service() {
 
     private lateinit var windowManager: WindowManager
-    private var bubbleView: View? = null
+    private var cardView: View? = null
     private var expandedView: View? = null
     private val repository = SummaryRepository(ClaudeApiService())
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
@@ -41,7 +41,7 @@ class FloatingBubbleService : Service() {
 
     companion object {
         const val EXTRA_URL = "extra_url"
-        private const val CHANNEL_ID = "bubble_service_channel"
+        private const val CHANNEL_ID = "floating_card_service_channel"
         private const val NOTIFICATION_ID = 1
     }
 
@@ -59,7 +59,7 @@ class FloatingBubbleService : Service() {
         val url = intent?.getStringExtra(EXTRA_URL)
         if (url != null) {
             currentUrl = url
-            showBubble()
+            showCard()
             // Auto-expand and start loading
             showExpandedView()
             loadSummary(url)
@@ -71,10 +71,10 @@ class FloatingBubbleService : Service() {
     private fun createNotificationChannel() {
         val channel = NotificationChannel(
             CHANNEL_ID,
-            "TL;DR Bubble",
+            "TL;DR Floating Card",
             NotificationManager.IMPORTANCE_LOW
         ).apply {
-            description = "Shows floating bubble for article summaries"
+            description = "Shows floating card for article summaries"
         }
         val notificationManager = getSystemService(NotificationManager::class.java)
         notificationManager.createNotificationChannel(channel)
@@ -84,14 +84,14 @@ class FloatingBubbleService : Service() {
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("TL;DR")
             .setContentText("Summarizing article...")
-            .setSmallIcon(R.drawable.ic_bubble)
+            .setSmallIcon(R.drawable.ic_floating_card)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .build()
     }
 
     @SuppressLint("InflateParams", "ClickableViewAccessibility")
-    private fun showBubble() {
-        if (bubbleView != null) return
+    private fun showCard() {
+        if (cardView != null) return
 
         val params = WindowManager.LayoutParams(
             WindowManager.LayoutParams.WRAP_CONTENT,
@@ -105,14 +105,14 @@ class FloatingBubbleService : Service() {
             y = 200
         }
 
-        bubbleView = LayoutInflater.from(this).inflate(R.layout.bubble_view, null)
+        cardView = LayoutInflater.from(this).inflate(R.layout.floating_card_bubble, null)
 
         var initialX = 0
         var initialY = 0
         var initialTouchX = 0f
         var initialTouchY = 0f
 
-        bubbleView?.setOnTouchListener { _, event ->
+        cardView?.setOnTouchListener { _, event ->
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
                     initialX = params.x
@@ -124,7 +124,7 @@ class FloatingBubbleService : Service() {
                 MotionEvent.ACTION_MOVE -> {
                     params.x = initialX + (event.rawX - initialTouchX).toInt()
                     params.y = initialY + (event.rawY - initialTouchY).toInt()
-                    windowManager.updateViewLayout(bubbleView, params)
+                    windowManager.updateViewLayout(cardView, params)
                     true
                 }
                 MotionEvent.ACTION_UP -> {
@@ -139,7 +139,7 @@ class FloatingBubbleService : Service() {
             }
         }
 
-        windowManager.addView(bubbleView, params)
+        windowManager.addView(cardView, params)
     }
 
     @SuppressLint("InflateParams")
@@ -156,10 +156,10 @@ class FloatingBubbleService : Service() {
             gravity = Gravity.CENTER
         }
 
-        expandedView = LayoutInflater.from(this).inflate(R.layout.bubble_expanded_view, null)
+        expandedView = LayoutInflater.from(this).inflate(R.layout.floating_card_expanded, null)
 
         expandedView?.findViewById<ImageView>(R.id.closeButton)?.setOnClickListener {
-            closeBubble()
+            closeCard()
         }
 
         expandedView?.findViewById<CardView>(R.id.summaryCard)?.setOnClickListener {
@@ -245,11 +245,11 @@ class FloatingBubbleService : Service() {
         scoreText.setTextColor(color)
     }
 
-    private fun closeBubble() {
+    private fun closeCard() {
         hideExpandedView()
-        bubbleView?.let {
+        cardView?.let {
             windowManager.removeView(it)
-            bubbleView = null
+            cardView = null
         }
         stopSelf()
     }
@@ -258,9 +258,9 @@ class FloatingBubbleService : Service() {
         super.onDestroy()
         serviceScope.cancel()
         hideExpandedView()
-        bubbleView?.let {
+        cardView?.let {
             windowManager.removeView(it)
-            bubbleView = null
+            cardView = null
         }
     }
 }

@@ -26,7 +26,7 @@
             </intent-filter>
         </activity>
 
-        <!-- Transparent activity to handle share intents and launch bubble -->
+        <!-- Transparent activity to handle share intents and launch floating card -->
         <activity
             android:name=".ShareReceiverActivity"
             android:exported="true"
@@ -41,12 +41,12 @@
         </activity>
 
         <service
-            android:name=".bubble.FloatingBubbleService"
+            android:name=".floatingcard.FloatingCardService"
             android:exported="false"
             android:foregroundServiceType="specialUse">
             <property
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
-                android:value="floating_bubble_overlay" />
+                android:value="floating_card_overlay" />
         </service>
     </application>
 

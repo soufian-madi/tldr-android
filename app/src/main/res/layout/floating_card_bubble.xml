@@ -7,9 +7,9 @@
     <ImageView
         android:layout_width="48dp"
         android:layout_height="48dp"
-        android:src="@drawable/ic_bubble"
-        android:background="@drawable/bubble_background"
+        android:src="@drawable/ic_floating_card"
+        android:background="@drawable/floating_card_background"
         android:padding="8dp"
-        android:contentDescription="TL;DR Bubble" />
+        android:contentDescription="TL;DR Floating Card" />
 
 </FrameLayout>
