@@ -174,8 +174,12 @@ Clickbait signals to look for:
 
 Note: The content may be HTML from a webpage. Extract and focus on the main article content, ignoring any remaining navigation, ads, or boilerplate text.
 
-Respond in this exact JSON format:
+Paywall handling: If the article content appears to be behind a paywall (login required, subscription needed, truncated content with "continue reading" prompts), set clickbait_score to 100 and summary to "Paywall". Do not attempt to summarize paywalled content.
+
+Respond with ONLY this JSON (no markdown, no code blocks, no extra text):
 {"clickbait_score": <number>, "title": "<extracted or inferred title>", "summary": "<your summary>"}
+
+Important: In the title field, replace any „ or " characters with backticks (`)
 
 Article content:
 $articleText
@@ -184,9 +188,20 @@ $articleText
 
     private fun parseResponse(content: String): Result<SummaryResult> {
         return try {
-            // Extract JSON from response (Claude might add extra text)
-            val jsonMatch = Regex("""\{[^{}]*"clickbait_score"[^{}]*\}""").find(content)
-            val jsonStr = jsonMatch?.value ?: content
+            // Strip markdown code blocks if present
+            var cleaned = content.trim()
+            if (cleaned.startsWith("```")) {
+                cleaned = cleaned.substringAfter("\n").substringBeforeLast("```").trim()
+            }
+
+            // Find JSON by locating first { and last }
+            val jsonStart = cleaned.indexOf('{')
+            val jsonEnd = cleaned.lastIndexOf('}')
+            val jsonStr = if (jsonStart >= 0 && jsonEnd > jsonStart) {
+                cleaned.substring(jsonStart, jsonEnd + 1)
+            } else {
+                cleaned
+            }
 
             val parsed = gson.fromJson(jsonStr, ClaudeSummaryResponse::class.java)
             Result.success(
