@@ -51,12 +51,13 @@ import com.example.tldr_ai.ui.theme.TldraiTheme
 @Composable
 fun MainScreen(
     uiState: SummaryUiState = SummaryUiState.Idle,
+    initialUrl: String? = null,
     onSummarize: (InputMode, String) -> Unit = { _, _ -> }
 ) {
     val context = LocalContext.current
 
     var inputMode by remember { mutableStateOf(InputMode.URL) }
-    var urlInput by remember { mutableStateOf("") }
+    var urlInput by remember { mutableStateOf(initialUrl ?: "") }
     var textInput by remember { mutableStateOf("") }
 
     val isLoading = uiState is SummaryUiState.Loading
