@@ -73,6 +73,10 @@ app/src/main/java/com/example/tldr_ai/
 - [ ] Clickbait detection algorithm
 - [ ] Error handling
 
+## Git Conventions
+
+- Commit messages must be 100 characters or less
+
 ## Build & Run
 
 ```bash
