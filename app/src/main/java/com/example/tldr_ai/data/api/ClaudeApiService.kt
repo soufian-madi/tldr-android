@@ -26,7 +26,7 @@ class ClaudeApiService {
 
     companion object {
         private const val API_URL = "https://api.anthropic.com/v1/messages"
-        private const val MODEL = "claude-opus-4-5-20251101"
+        private const val MODEL = "claude-haiku-4-5-20251001"
         private const val API_VERSION = "2023-06-01"
     }
 
@@ -171,10 +171,15 @@ Clickbait signals to look for:
 - Withholding key information that could be stated simply
 - Question headlines with obvious answers
 - "This one trick" / "what happened next" patterns
+- the title does not reflect the essence of the content
 
 Note: The content may be HTML from a webpage. Extract and focus on the main article content, ignoring any remaining navigation, ads, or boilerplate text.
 
+Summery structure: one important goal is to answer questions that may arise when reading the title. if the title already raises a question it must be answered in the summary, otherwise
+try to articulate (to yourself) the most probable question a user WOULD have upon reading this title and answer it in the summery.
+
 Paywall handling: If the article content appears to be behind a paywall (login required, subscription needed, truncated content with "continue reading" prompts), set clickbait_score to 100 and summary to "Paywall". Do not attempt to summarize paywalled content.
+Language handling: Respect the original language of the content. if it is in german summerize in german, if it is in english summerize in english
 
 Respond with ONLY this JSON (no markdown, no code blocks, no extra text):
 {"clickbait_score": <number>, "title": "<extracted or inferred title>", "summary": "<your summary>"}
