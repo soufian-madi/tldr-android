@@ -34,7 +34,8 @@ class FloatingCardService : Service() {
     private lateinit var windowManager: WindowManager
     private var cardView: View? = null
     private var expandedView: View? = null
-    private val repository = SummaryRepository(ClaudeApiService())
+    private val apiService = ClaudeApiService()
+    private val repository = SummaryRepository(apiService)
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
     private var currentUrl: String? = null
@@ -191,7 +192,8 @@ class FloatingCardService : Service() {
 
     private fun loadSummary(url: String) {
         expandedView?.let { view ->
-            val progressBar = view.findViewById<ProgressBar>(R.id.progressBar)
+            val loadingLayout = view.findViewById<View>(R.id.loadingLayout)
+            val loadingStatusText = view.findViewById<TextView>(R.id.loadingStatusText)
             val contentLayout = view.findViewById<View>(R.id.contentLayout)
             val titleText = view.findViewById<TextView>(R.id.titleText)
             val scoreText = view.findViewById<TextView>(R.id.scoreText)
@@ -199,23 +201,32 @@ class FloatingCardService : Service() {
             val summaryText = view.findViewById<TextView>(R.id.summaryText)
             val errorText = view.findViewById<TextView>(R.id.errorText)
 
-            progressBar.visibility = View.VISIBLE
+            loadingLayout.visibility = View.VISIBLE
+            loadingStatusText.text = "Fetching article..."
             contentLayout.visibility = View.GONE
             errorText.visibility = View.GONE
 
             serviceScope.launch {
-                val result = withContext(Dispatchers.IO) {
-                    repository.summarizeFromUrl(url)
+                val fetchResult = withContext(Dispatchers.IO) { apiService.fetchUrl(url) }
+
+                if (fetchResult.isFailure) {
+                    loadingLayout.visibility = View.GONE
+                    errorText.visibility = View.VISIBLE
+                    errorText.text = fetchResult.exceptionOrNull()?.message ?: "Failed to fetch article"
+                    return@launch
                 }
 
+                loadingStatusText.text = "Waiting for AI response..."
+
+                val result = withContext(Dispatchers.IO) { apiService.summarize(fetchResult.getOrThrow()) }
+
+                loadingLayout.visibility = View.GONE
                 result.fold(
                     onSuccess = { summary ->
-                        progressBar.visibility = View.GONE
                         contentLayout.visibility = View.VISIBLE
                         updateSummaryUI(summary, titleText, scoreText, scoreBar, summaryText)
                     },
                     onFailure = { error ->
-                        progressBar.visibility = View.GONE
                         errorText.visibility = View.VISIBLE
                         errorText.text = error.message ?: "Failed to load summary"
                     }
