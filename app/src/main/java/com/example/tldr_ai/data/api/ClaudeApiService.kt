@@ -25,8 +25,8 @@ class ClaudeApiService {
     private val gson = Gson()
 
     companion object {
-        private const val API_URL = "https://api.anthropic.com/v1/messages"
-        private const val MODEL = "claude-haiku-4-5-20251001"
+        private const val API_URL = "https://ao-ai-api-management.azure-api.net/ai-gateway/v1/messages"
+        private const val MODEL = "claude-sonnet-4-6"
         private const val API_VERSION = "2023-06-01"
     }
 
