@@ -16,12 +16,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -31,6 +27,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.example.tldr_ai.data.model.InputMode
 import com.example.tldr_ai.data.model.SummaryResult
@@ -39,19 +36,12 @@ import com.example.tldr_ai.ui.components.InputSection
 import com.example.tldr_ai.ui.components.SummaryCard
 import com.example.tldr_ai.ui.theme.TldraiTheme
 
-/**
- * Main screen of the TL;DR app.
- *
- * TODO: Phase 2 - Connect to ViewModel
- * - Create MainViewModel with StateFlow for UI state
- * - Inject SummaryRepository
- * - Handle summarization logic
- */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
     uiState: SummaryUiState = SummaryUiState.Idle,
-    onSummarize: (InputMode, String) -> Unit = { _, _ -> }
+    onSummarize: (InputMode, String) -> Unit = { _, _ -> },
+    topPadding: Dp = 0.dp,
+    bottomPadding: Dp = 0.dp
 ) {
     val context = LocalContext.current
 
@@ -63,105 +53,84 @@ fun MainScreen(
     val currentInput = if (inputMode == InputMode.URL) urlInput else textInput
     val canSubmit = currentInput.isNotBlank() && !isLoading
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = "TL;DR",
-                        style = MaterialTheme.typography.headlineMedium
-                    )
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                )
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(top = topPadding, bottom = bottomPadding)
+            .padding(16.dp)
+            .verticalScroll(rememberScrollState())
+    ) {
+        InputSection(
+            inputMode = inputMode,
+            onInputModeChange = { inputMode = it },
+            urlValue = urlInput,
+            onUrlChange = { urlInput = it },
+            textValue = textInput,
+            onTextChange = { textInput = it },
+            enabled = !isLoading
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Button(
+            onClick = { onSummarize(inputMode, currentInput) },
+            modifier = Modifier.fillMaxWidth(),
+            enabled = canSubmit
+        ) {
+            Text(
+                text = if (isLoading) "Summarizing..." else "Get TL;DR",
+                style = MaterialTheme.typography.labelLarge
             )
         }
-    ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(16.dp)
-                .verticalScroll(rememberScrollState())
-        ) {
-            // Input section
-            InputSection(
-                inputMode = inputMode,
-                onInputModeChange = { inputMode = it },
-                urlValue = urlInput,
-                onUrlChange = { urlInput = it },
-                textValue = textInput,
-                onTextChange = { textInput = it },
-                enabled = !isLoading
-            )
 
-            Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(24.dp))
 
-            // Summarize button
-            Button(
-                onClick = { onSummarize(inputMode, currentInput) },
-                modifier = Modifier.fillMaxWidth(),
-                enabled = canSubmit
-            ) {
-                Text(
-                    text = if (isLoading) "Summarizing..." else "Get TL;DR",
-                    style = MaterialTheme.typography.labelLarge
+        when (uiState) {
+            is SummaryUiState.Idle -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 32.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "Paste a URL or article text to get started",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
+            is SummaryUiState.Loading -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 32.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
+            }
+
+            is SummaryUiState.Success -> {
+                SummaryCard(
+                    result = uiState.result,
+                    onCopyClick = {
+                        copyToClipboard(context, uiState.result.summary)
+                    },
+                    onShareClick = {
+                        shareText(context, uiState.result.summary)
+                    }
                 )
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // Result section
-            when (uiState) {
-                is SummaryUiState.Idle -> {
-                    // Show placeholder text
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 32.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "Paste a URL or article text to get started",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-
-                is SummaryUiState.Loading -> {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 32.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator()
-                    }
-                }
-
-                is SummaryUiState.Success -> {
-                    SummaryCard(
-                        result = uiState.result,
-                        onCopyClick = {
-                            copyToClipboard(context, uiState.result.summary)
-                        },
-                        onShareClick = {
-                            shareText(context, uiState.result.summary)
-                        }
-                    )
-                }
-
-                is SummaryUiState.Error -> {
-                    Text(
-                        text = uiState.message,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.padding(vertical = 16.dp)
-                    )
-                }
+            is SummaryUiState.Error -> {
+                Text(
+                    text = uiState.message,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.padding(vertical = 16.dp)
+                )
             }
         }
     }
