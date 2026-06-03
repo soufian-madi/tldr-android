@@ -67,6 +67,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _uiState.value = SummaryUiState.Idle
     }
 
+    fun refreshHistory() {
+        _historyItems.value = historyRepository.getItems()
+    }
+
     fun clearHistory() {
         historyRepository.clearAll()
         _historyItems.value = emptyList()
