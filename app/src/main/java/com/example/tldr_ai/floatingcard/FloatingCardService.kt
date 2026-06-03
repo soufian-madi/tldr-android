@@ -20,8 +20,11 @@ import androidx.cardview.widget.CardView
 import androidx.core.app.NotificationCompat
 import com.example.tldr_ai.R
 import com.example.tldr_ai.data.api.ClaudeApiService
+import com.example.tldr_ai.data.model.HistoryItem
 import com.example.tldr_ai.data.model.SummaryResult
+import com.example.tldr_ai.data.repository.HistoryRepository
 import com.example.tldr_ai.data.repository.SummaryRepository
+import java.util.UUID
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -225,6 +228,17 @@ class FloatingCardService : Service() {
                     onSuccess = { summary ->
                         contentLayout.visibility = View.VISIBLE
                         updateSummaryUI(summary, titleText, scoreText, scoreBar, summaryText)
+                        if (summary.summary != "Paywall") {
+                            val historyItem = HistoryItem(
+                                id = UUID.randomUUID().toString(),
+                                url = url,
+                                title = summary.originalTitle,
+                                clickbaitScore = summary.clickbaitScore,
+                                summary = summary.summary,
+                                timestamp = System.currentTimeMillis()
+                            )
+                            HistoryRepository(applicationContext).addItem(historyItem)
+                        }
                     },
                     onFailure = { error ->
                         errorText.visibility = View.VISIBLE
