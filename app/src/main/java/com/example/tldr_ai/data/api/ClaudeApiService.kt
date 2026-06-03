@@ -192,40 +192,60 @@ $articleText
     }
 
     private fun parseResponse(content: String): Result<SummaryResult> {
-        return try {
-            // Strip markdown code blocks if present
-            var cleaned = content.trim()
-            if (cleaned.startsWith("```")) {
-                cleaned = cleaned.substringAfter("\n").substringBeforeLast("```").trim()
-            }
-
-            // Find JSON by locating first { and last }
-            val jsonStart = cleaned.indexOf('{')
-            val jsonEnd = cleaned.lastIndexOf('}')
-            val jsonStr = if (jsonStart >= 0 && jsonEnd > jsonStart) {
-                cleaned.substring(jsonStart, jsonEnd + 1)
-            } else {
-                cleaned
-            }
-
-            val parsed = gson.fromJson(jsonStr, ClaudeSummaryResponse::class.java)
-            Result.success(
-                SummaryResult(
-                    summary = parsed.summary,
-                    clickbaitScore = parsed.clickbaitScore.coerceIn(0, 100),
-                    originalTitle = parsed.title
-                )
-            )
-        } catch (e: Exception) {
-            // Fallback: treat entire response as summary with default score
-            Result.success(
-                SummaryResult(
-                    summary = content,
-                    clickbaitScore = 50,
-                    originalTitle = null
-                )
-            )
+        var cleaned = content.trim()
+        if (cleaned.startsWith("```")) {
+            cleaned = cleaned.substringAfter("\n").substringBeforeLast("```").trim()
         }
+
+        val jsonStart = cleaned.indexOf('{')
+        val jsonEnd = cleaned.lastIndexOf('}')
+        val jsonStr = if (jsonStart >= 0 && jsonEnd > jsonStart) {
+            cleaned.substring(jsonStart, jsonEnd + 1)
+        } else cleaned
+
+        // Try standard JSON parse first
+        try {
+            val parsed = gson.fromJson(jsonStr, ClaudeSummaryResponse::class.java)
+            if (parsed?.summary != null) {
+                return Result.success(
+                    SummaryResult(
+                        summary = parsed.summary,
+                        clickbaitScore = parsed.clickbaitScore.coerceIn(0, 100),
+                        originalTitle = parsed.title
+                    )
+                )
+            }
+        } catch (_: Exception) { /* fall through to regex extraction */ }
+
+        // Regex fallback for malformed JSON (e.g. unescaped quotes inside string values).
+        // The model always produces fields in order: clickbait_score → title → summary.
+        val score = Regex(""""clickbait_score"\s*:\s*(\d+)""")
+            .find(jsonStr)?.groupValues?.get(1)?.toIntOrNull() ?: 50
+
+        // Title: text between "title": " and the closing delimiter before "summary"
+        val titleValueStart = Regex(""""title"\s*:\s*"""").find(jsonStr)?.range?.last?.plus(1)
+        val summaryKeyPos = Regex("""",\s*"summary"\s*:""").find(jsonStr)?.range?.first
+        val title = if (titleValueStart != null && summaryKeyPos != null && summaryKeyPos > titleValueStart) {
+            jsonStr.substring(titleValueStart, summaryKeyPos).takeIf { it.isNotBlank() }
+        } else null
+
+        // Summary: everything after "summary": " up to the closing "} at the end
+        val summaryValueStart = Regex(""""summary"\s*:\s*"""").find(jsonStr)?.range?.last?.plus(1)
+        val summary = if (summaryValueStart != null) {
+            jsonStr.substring(summaryValueStart)
+                .trimEnd()
+                .let { if (it.endsWith('}')) it.dropLast(1).trimEnd() else it }
+                .let { if (it.endsWith('"')) it.dropLast(1) else it }
+                .takeIf { it.isNotBlank() }
+        } else null
+
+        return Result.success(
+            SummaryResult(
+                summary = summary ?: content,
+                clickbaitScore = score.coerceIn(0, 100),
+                originalTitle = title
+            )
+        )
     }
 }
 
