@@ -1,16 +1,25 @@
 package com.example.tldr_ai.data.api
 
 import com.example.tldr_ai.BuildConfig
+import com.example.tldr_ai.data.model.AiModel
+import com.example.tldr_ai.data.model.ModelFamily
+import com.example.tldr_ai.data.model.StreamEvent
 import com.example.tldr_ai.data.model.SummaryResult
 import com.google.gson.Gson
+import com.google.gson.JsonParser
 import com.google.gson.annotations.SerializedName
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import java.util.concurrent.TimeUnit
+import kotlin.coroutines.coroutineContext
 
 /**
  * Service for communicating with the Claude API.
@@ -22,12 +31,16 @@ class ClaudeApiService {
         .readTimeout(60, TimeUnit.SECONDS)
         .build()
 
+    // Streaming responses can stay open far longer than a single read; disable the read
+    // timeout so long reasoning streams aren't aborted mid-flight.
+    private val streamClient = client.newBuilder()
+        .readTimeout(0, TimeUnit.SECONDS)
+        .build()
+
     private val gson = Gson()
 
     companion object {
-        private const val API_URL = "https://ao-ai-api-management.azure-api.net/ai-gateway/v1/messages"
-        private const val MODEL = "claude-sonnet-4-6"
-        private const val API_VERSION = "2023-06-01"
+        private const val GATEWAY = "https://ao-ai-api-management.azure-api.net/ai-gateway"
     }
 
     /**
@@ -106,53 +119,112 @@ class ClaudeApiService {
     }
 
     /**
-     * Sends article text to Claude for summarization and clickbait analysis.
+     * Streams a summary for the given article text using the selected model.
+     *
+     * Routes by model family: OpenAI models hit /v1/responses (and stream a reasoning
+     * summary), Anthropic models hit /chat/completions (answer only). Reasoning deltas are
+     * emitted live; the answer is accumulated and parsed into a [SummaryResult] at the end.
      */
-    suspend fun summarize(articleText: String): Result<SummaryResult> = withContext(Dispatchers.IO) {
-        try {
-            val apiKey = BuildConfig.CLAUDE_API_KEY
-            if (apiKey.isBlank()) {
-                return@withContext Result.failure(Exception("API key not configured"))
-            }
+    fun summarizeStream(articleText: String, model: AiModel): Flow<StreamEvent> = flow {
+        val apiKey = BuildConfig.CLAUDE_API_KEY
+        if (apiKey.isBlank()) {
+            emit(StreamEvent.Failure("API key not configured"))
+            return@flow
+        }
 
-            val prompt = buildPrompt(articleText)
-            val requestBody = ClaudeRequest(
-                model = MODEL,
-                maxTokens = 1024,
-                messages = listOf(
-                    Message(role = "user", content = prompt)
+        val prompt = buildPrompt(articleText)
+        val (endpoint, jsonBody) = when (model.family) {
+            ModelFamily.OPENAI -> "$GATEWAY/v1/responses" to gson.toJson(
+                ResponsesRequest(
+                    model = model.id,
+                    stream = true,
+                    reasoning = ReasoningCfg(effort = "medium", summary = "auto"),
+                    input = prompt
                 )
             )
 
-            val jsonBody = gson.toJson(requestBody)
-            val request = Request.Builder()
-                .url(API_URL)
-                .addHeader("Content-Type", "application/json")
-                .addHeader("x-api-key", apiKey)
-                .addHeader("anthropic-version", API_VERSION)
-                .post(jsonBody.toRequestBody("application/json".toMediaType()))
-                .build()
+            ModelFamily.ANTHROPIC -> "$GATEWAY/chat/completions" to gson.toJson(
+                ChatRequest(
+                    model = model.id,
+                    stream = true,
+                    maxTokens = 1024,
+                    messages = listOf(Message(role = "user", content = prompt))
+                )
+            )
+        }
 
-            val response = client.newCall(request).execute()
-            val responseBody = response.body?.string()
+        val request = Request.Builder()
+            .url(endpoint)
+            .addHeader("Content-Type", "application/json")
+            .addHeader("x-api-key", apiKey)
+            .addHeader("x-model", model.id)
+            .post(jsonBody.toRequestBody("application/json".toMediaType()))
+            .build()
 
-            if (!response.isSuccessful) {
-                return@withContext Result.failure(
-                    Exception("API error ${response.code}: ${responseBody ?: "Unknown error"}")
+        try {
+            streamClient.newCall(request).execute().use { resp ->
+                val body = resp.body
+                if (!resp.isSuccessful || body == null) {
+                    emit(StreamEvent.Failure("API error ${resp.code}"))
+                    return@use
+                }
+
+                val source = body.source()
+                val answer = StringBuilder()
+
+                while (coroutineContext.isActive) {
+                    val line = source.readUtf8Line() ?: break
+                    if (!line.startsWith("data:")) continue
+                    val payload = line.removePrefix("data:").trim()
+                    if (payload.isEmpty()) continue
+                    if (payload == "[DONE]") break
+
+                    val delta = extractDelta(payload) ?: continue
+                    when (delta.first) {
+                        "reason" -> emit(StreamEvent.Reasoning(delta.second))
+                        "answer" -> answer.append(delta.second)
+                    }
+                }
+
+                emit(
+                    parseResponse(answer.toString()).fold(
+                        onSuccess = { StreamEvent.Done(it) },
+                        onFailure = { StreamEvent.Failure(it.message ?: "Failed to parse response") }
+                    )
                 )
             }
-
-            if (responseBody == null) {
-                return@withContext Result.failure(Exception("Empty response from API"))
-            }
-
-            val claudeResponse = gson.fromJson(responseBody, ClaudeResponse::class.java)
-            val content = claudeResponse.content.firstOrNull()?.text
-                ?: return@withContext Result.failure(Exception("No content in response"))
-
-            parseResponse(content)
         } catch (e: Exception) {
-            Result.failure(e)
+            emit(StreamEvent.Failure(e.message ?: "Streaming failed"))
+        }
+    }.flowOn(Dispatchers.IO)
+
+    /**
+     * Normalizes a single SSE `data:` payload from either backend into a
+     * (kind, text) pair where kind is "reason" or "answer". Returns null for housekeeping
+     * events (signatures, lifecycle markers, errors). Mirrors the jq filter in chat.sh.
+     */
+    private fun extractDelta(payload: String): Pair<String, String>? {
+        return try {
+            val obj = JsonParser.parseString(payload).asJsonObject
+            when (obj.get("type")?.asString) {
+                // OpenAI /v1/responses events
+                "response.reasoning_summary_text.delta" ->
+                    "reason" to (obj.get("delta")?.asString ?: "")
+                "response.output_text.delta" ->
+                    "answer" to (obj.get("delta")?.asString ?: "")
+                // Anthropic native streaming events (/chat/completions)
+                "content_block_delta" -> {
+                    val d = obj.getAsJsonObject("delta")
+                    when (d?.get("type")?.asString) {
+                        "thinking_delta" -> "reason" to (d.get("thinking")?.asString ?: "")
+                        "text_delta" -> "answer" to (d.get("text")?.asString ?: "")
+                        else -> null
+                    }
+                }
+                else -> null
+            }
+        } catch (_: Exception) {
+            null
         }
     }
 
@@ -251,8 +323,23 @@ $articleText
 
 // Request/Response DTOs
 
-data class ClaudeRequest(
+/** OpenAI /v1/responses request body. */
+data class ResponsesRequest(
     val model: String,
+    val stream: Boolean,
+    val reasoning: ReasoningCfg,
+    val input: String
+)
+
+data class ReasoningCfg(
+    val effort: String,
+    val summary: String
+)
+
+/** Anthropic /chat/completions request body. */
+data class ChatRequest(
+    val model: String,
+    val stream: Boolean,
     @SerializedName("max_tokens") val maxTokens: Int,
     val messages: List<Message>
 )
@@ -260,15 +347,6 @@ data class ClaudeRequest(
 data class Message(
     val role: String,
     val content: String
-)
-
-data class ClaudeResponse(
-    val content: List<ContentBlock>
-)
-
-data class ContentBlock(
-    val type: String,
-    val text: String
 )
 
 data class ClaudeSummaryResponse(

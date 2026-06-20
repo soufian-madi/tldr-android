@@ -28,6 +28,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModelProvider
+import com.example.tldr_ai.data.model.Models
 import com.example.tldr_ai.ui.screens.HistoryScreen
 import com.example.tldr_ai.ui.screens.MainScreen
 import com.example.tldr_ai.ui.theme.TldraiTheme
@@ -48,6 +49,7 @@ class MainActivity : ComponentActivity() {
             TldraiTheme {
                 val uiState by viewModel.uiState.collectAsState()
                 val historyItems by viewModel.historyItems.collectAsState()
+                val selectedModel by viewModel.selectedModel.collectAsState()
 
                 var selectedTab by remember { mutableIntStateOf(0) }
                 var showClearDialog by remember { mutableStateOf(false) }
@@ -126,6 +128,9 @@ class MainActivity : ComponentActivity() {
                         0 -> MainScreen(
                             uiState = uiState,
                             onSummarize = { mode, input -> viewModel.summarize(mode, input) },
+                            selectedModel = selectedModel,
+                            models = Models.ALL,
+                            onModelSelected = { viewModel.setModel(it) },
                             topPadding = topPadding,
                             bottomPadding = bottomPadding
                         )

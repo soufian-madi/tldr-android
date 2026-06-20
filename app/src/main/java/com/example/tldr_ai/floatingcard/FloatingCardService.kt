@@ -21,8 +21,10 @@ import androidx.core.app.NotificationCompat
 import com.example.tldr_ai.R
 import com.example.tldr_ai.data.api.ClaudeApiService
 import com.example.tldr_ai.data.model.HistoryItem
+import com.example.tldr_ai.data.model.StreamEvent
 import com.example.tldr_ai.data.model.SummaryResult
 import com.example.tldr_ai.data.repository.HistoryRepository
+import com.example.tldr_ai.data.repository.SettingsRepository
 import com.example.tldr_ai.data.repository.SummaryRepository
 import java.util.UUID
 import kotlinx.coroutines.CoroutineScope
@@ -209,6 +211,8 @@ class FloatingCardService : Service() {
             contentLayout.visibility = View.GONE
             errorText.visibility = View.GONE
 
+            val model = SettingsRepository(this).getSelectedModel()
+
             serviceScope.launch {
                 val fetchResult = withContext(Dispatchers.IO) { apiService.fetchUrl(url) }
 
@@ -221,30 +225,39 @@ class FloatingCardService : Service() {
 
                 loadingStatusText.text = "Waiting for AI response..."
 
-                val result = withContext(Dispatchers.IO) { apiService.summarize(fetchResult.getOrThrow()) }
-
-                loadingLayout.visibility = View.GONE
-                result.fold(
-                    onSuccess = { summary ->
-                        contentLayout.visibility = View.VISIBLE
-                        updateSummaryUI(summary, titleText, scoreText, scoreBar, summaryText)
-                        if (summary.summary != "Paywall") {
-                            val historyItem = HistoryItem(
-                                id = UUID.randomUUID().toString(),
-                                url = url,
-                                title = summary.originalTitle,
-                                clickbaitScore = summary.clickbaitScore,
-                                summary = summary.summary,
-                                timestamp = System.currentTimeMillis()
-                            )
-                            HistoryRepository(applicationContext).addItem(historyItem)
+                val reasoning = StringBuilder()
+                repository.summarizeStream(fetchResult.getOrThrow(), model).collect { event ->
+                    when (event) {
+                        is StreamEvent.Reasoning -> {
+                            // Faint live reasoning (gpt-* models only); show the newest text.
+                            reasoning.append(event.delta)
+                            loadingStatusText.text = reasoning.toString()
                         }
-                    },
-                    onFailure = { error ->
-                        errorText.visibility = View.VISIBLE
-                        errorText.text = error.message ?: "Failed to load summary"
+
+                        is StreamEvent.Done -> {
+                            loadingLayout.visibility = View.GONE
+                            contentLayout.visibility = View.VISIBLE
+                            updateSummaryUI(event.result, titleText, scoreText, scoreBar, summaryText)
+                            if (event.result.summary != "Paywall") {
+                                val historyItem = HistoryItem(
+                                    id = UUID.randomUUID().toString(),
+                                    url = url,
+                                    title = event.result.originalTitle,
+                                    clickbaitScore = event.result.clickbaitScore,
+                                    summary = event.result.summary,
+                                    timestamp = System.currentTimeMillis()
+                                )
+                                HistoryRepository(applicationContext).addItem(historyItem)
+                            }
+                        }
+
+                        is StreamEvent.Failure -> {
+                            loadingLayout.visibility = View.GONE
+                            errorText.visibility = View.VISIBLE
+                            errorText.text = event.message
+                        }
                     }
-                )
+                }
             }
         }
     }

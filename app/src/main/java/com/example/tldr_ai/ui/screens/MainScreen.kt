@@ -11,12 +11,19 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -26,10 +33,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.example.tldr_ai.data.model.AiModel
 import com.example.tldr_ai.data.model.InputMode
+import com.example.tldr_ai.data.model.Models
 import com.example.tldr_ai.data.model.SummaryResult
 import com.example.tldr_ai.data.model.SummaryUiState
 import com.example.tldr_ai.ui.components.InputSection
@@ -40,6 +51,9 @@ import com.example.tldr_ai.ui.theme.TldraiTheme
 fun MainScreen(
     uiState: SummaryUiState = SummaryUiState.Idle,
     onSummarize: (InputMode, String) -> Unit = { _, _ -> },
+    selectedModel: AiModel = Models.DEFAULT,
+    models: List<AiModel> = Models.ALL,
+    onModelSelected: (AiModel) -> Unit = {},
     topPadding: Dp = 0.dp,
     bottomPadding: Dp = 0.dp
 ) {
@@ -48,8 +62,9 @@ fun MainScreen(
     var inputMode by remember { mutableStateOf(InputMode.URL) }
     var urlInput by remember { mutableStateOf("") }
     var textInput by remember { mutableStateOf("") }
+    var modelMenuExpanded by remember { mutableStateOf(false) }
 
-    val isLoading = uiState is SummaryUiState.Loading
+    val isLoading = uiState is SummaryUiState.Loading || uiState is SummaryUiState.Reasoning
     val currentInput = if (inputMode == InputMode.URL) urlInput else textInput
     val canSubmit = currentInput.isNotBlank() && !isLoading
 
@@ -69,6 +84,41 @@ fun MainScreen(
             onTextChange = { textInput = it },
             enabled = !isLoading
         )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Model picker
+        Box {
+            OutlinedButton(
+                onClick = { modelMenuExpanded = true },
+                enabled = !isLoading,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = selectedModel.displayName,
+                    modifier = Modifier.weight(1f),
+                    textAlign = TextAlign.Start
+                )
+                Icon(
+                    imageVector = Icons.Default.ArrowDropDown,
+                    contentDescription = "Select model"
+                )
+            }
+            DropdownMenu(
+                expanded = modelMenuExpanded,
+                onDismissRequest = { modelMenuExpanded = false }
+            ) {
+                models.forEach { model ->
+                    DropdownMenuItem(
+                        text = { Text(model.displayName) },
+                        onClick = {
+                            onModelSelected(model)
+                            modelMenuExpanded = false
+                        }
+                    )
+                }
+            }
+        }
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -109,6 +159,23 @@ fun MainScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     CircularProgressIndicator()
+                }
+            }
+
+            is SummaryUiState.Reasoning -> {
+                // Faint live reasoning while the model thinks; replaced by the card on success.
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = 220.dp)
+                        .verticalScroll(rememberScrollState())
+                ) {
+                    Text(
+                        text = uiState.text,
+                        style = MaterialTheme.typography.bodySmall,
+                        fontStyle = FontStyle.Italic,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                    )
                 }
             }
 
@@ -164,6 +231,14 @@ private fun MainScreenIdlePreview() {
 private fun MainScreenLoadingPreview() {
     TldraiTheme {
         MainScreen(uiState = SummaryUiState.Loading)
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun MainScreenReasoningPreview() {
+    TldraiTheme {
+        MainScreen(uiState = SummaryUiState.Reasoning("Analyzing the headline for clickbait signals..."))
     }
 }
 
