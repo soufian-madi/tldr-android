@@ -8,8 +8,10 @@ import com.example.tldr_ai.data.model.HistoryItem
 import com.example.tldr_ai.data.model.InputMode
 import com.example.tldr_ai.data.model.StreamEvent
 import com.example.tldr_ai.data.model.SummaryResult
+import com.example.tldr_ai.data.model.Models
 import com.example.tldr_ai.data.model.SummaryUiState
 import com.example.tldr_ai.data.repository.HistoryRepository
+import com.example.tldr_ai.data.repository.ModelCatalogRepository
 import com.example.tldr_ai.data.repository.SettingsRepository
 import com.example.tldr_ai.data.repository.SummaryRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -23,6 +25,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val repository = SummaryRepository()
     private val historyRepository = HistoryRepository(application)
     private val settingsRepository = SettingsRepository(application)
+    private val catalogRepository = ModelCatalogRepository(application)
 
     private val _uiState = MutableStateFlow<SummaryUiState>(SummaryUiState.Idle)
     val uiState: StateFlow<SummaryUiState> = _uiState.asStateFlow()
@@ -33,12 +36,37 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _selectedModel = MutableStateFlow(settingsRepository.getSelectedModel())
     val selectedModel: StateFlow<AiModel> = _selectedModel.asStateFlow()
 
+    // Starts from the cached catalog (or the bundled fallback) so the picker is never empty,
+    // then gets replaced by the live gateway catalog once it arrives.
+    private val _models = MutableStateFlow(catalogRepository.getModels())
+    val models: StateFlow<List<AiModel>> = _models.asStateFlow()
+
     private var lastMode: InputMode = InputMode.URL
     private var lastInput: String = ""
+
+    init {
+        refreshModels()
+    }
 
     fun setModel(model: AiModel) {
         settingsRepository.setSelectedModel(model)
         _selectedModel.value = model
+    }
+
+    /**
+     * Reloads the model list from the gateway. Failures are ignored: the cached (or fallback)
+     * list stays in place rather than leaving the user with an empty picker.
+     */
+    fun refreshModels() {
+        viewModelScope.launch {
+            val models = catalogRepository.refresh().getOrNull() ?: return@launch
+            _models.value = models
+            // Re-point the saved selection at its catalog entry (a legacy short id resolves via
+            // aliases); if the model is gone from the catalog, fall back to a sensible default.
+            val resolved = Models.find(models, _selectedModel.value.id)
+                ?: Models.preferredDefault(models)
+            if (resolved != _selectedModel.value) setModel(resolved)
+        }
     }
 
     fun summarize(mode: InputMode, input: String) {

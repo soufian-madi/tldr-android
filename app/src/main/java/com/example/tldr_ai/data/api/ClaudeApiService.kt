@@ -39,10 +39,6 @@ class ClaudeApiService {
 
     private val gson = Gson()
 
-    companion object {
-        private const val GATEWAY = "https://ao-ai-api-management.azure-api.net/ai-gateway"
-    }
-
     /**
      * Fetches content from a URL and returns preprocessed HTML.
      */

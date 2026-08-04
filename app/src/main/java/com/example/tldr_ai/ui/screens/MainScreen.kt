@@ -52,7 +52,7 @@ fun MainScreen(
     uiState: SummaryUiState = SummaryUiState.Idle,
     onSummarize: (InputMode, String) -> Unit = { _, _ -> },
     selectedModel: AiModel = Models.DEFAULT,
-    models: List<AiModel> = Models.ALL,
+    models: List<AiModel> = Models.FALLBACK,
     onModelSelected: (AiModel) -> Unit = {},
     topPadding: Dp = 0.dp,
     bottomPadding: Dp = 0.dp
