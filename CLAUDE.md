@@ -25,10 +25,28 @@ The key differentiator: **the more clickbaity the article, the shorter the respo
 - Question-based headlines that could be answered simply
 - Numbered lists promising secrets/hacks/tricks
 
+## Design Language
+
+The UI is monochrome on purpose: an "ink & paper" palette (near-black in dark, warm off-white in
+light) with **no hue anywhere except the clickbait verdict**, so colour always means exactly one
+thing. Dynamic colour is deliberately *not* used — the wallpaper-derived accent fought with the
+verdict hues.
+
+- **Palette:** `TldrPalette` via `LocalPalette` (see `ui/theme/Theme.kt`). Components read
+  `palette.*` for exact tones; stock Material widgets get the mapped `colorScheme`.
+- **Type:** sans for the interface, **serif for the summary itself** — the one thing meant to be
+  read. `WordmarkStyle`, `OverlineStyle`, `ReadingStyle` live in `ui/theme/Type.kt`.
+- **Verdict, not percentage:** the score is shown as a word (Informative / Some spin / Pure
+  clickbait) plus a countable 12-segment meter. The number was never the point.
+- **One input, no mode switch:** what you paste decides (`detectInputMode`). The detected mode is
+  shown as a tappable chip in case the guess is wrong.
+- **Layout:** composer pinned at the bottom within thumb reach; the answer rises out of it and is
+  the only region that scrolls. No top app bar, no bottom nav.
+
 ## Tech Stack
 
 - **Language:** Kotlin
-- **UI:** Jetpack Compose with Material 3 + Dynamic Colors
+- **UI:** Jetpack Compose with Material 3, fixed (non-dynamic) colour scheme
 - **Min SDK:** 30 (Android 11)
 - **Target SDK:** 36
 - **AI:** All requests go through the AI gateway (`ao-ai-api-management`), which exposes both
@@ -40,7 +58,7 @@ The key differentiator: **the more clickbaity the article, the shorter the respo
 
 ```
 app/src/main/java/com/example/tldr_ai/
-├── MainActivity.kt                # Scaffold + bottom nav (Summarize / History)
+├── MainActivity.kt                # Two routes (Home / History), animated, no Scaffold bars
 ├── ShareReceiverActivity.kt       # Transparent activity for Android share-sheet intents
 ├── floatingcard/
 │   └── FloatingCardService.kt     # Overlay foreground service (classic Views, not Compose)
@@ -49,13 +67,16 @@ app/src/main/java/com/example/tldr_ai/
 │   │   ├── ClaudeApiService.kt    # Gateway client: URL fetch + streaming summarize
 │   │   ├── ModelCatalogService.kt # Fetches available models from the gateway
 │   │   └── Gateway.kt             # Gateway base URL
-│   ├── model/                     # SummaryResult, AiModel, HistoryItem, UI/stream state
+│   ├── model/                     # SummaryResult, AiModel, HistoryItem, UI/stream state,
+│   │                              #   detectInputMode / normalizeUrl
 │   └── repository/                # Summary, History, ModelCatalog, Settings
 └── ui/
-    ├── components/                # ClickbaitIndicator, InputSection, SummaryCard, HistoryItemCard
+    ├── components/                # ClickbaitMeter (Verdict), Composer, ModelPicker (sheet),
+    │                              #   SummaryView, StateViews (Thinking/Legend/Error),
+    │                              #   HistoryRow, Chips
     ├── screens/                   # MainScreen, HistoryScreen
     ├── viewmodel/MainViewModel.kt # UI state via StateFlow
-    └── theme/
+    └── theme/                     # Color, Type, Theme (TldrPalette)
 ```
 
 ## Key Behaviours
@@ -67,6 +88,7 @@ app/src/main/java/com/example/tldr_ai/
 - **Model routing:** OpenAI models hit `/v1/responses`, Anthropic models hit
   `/chat/completions`, selected via the `x-model` header with the catalog's *short* alias.
 - **History:** last 50 summaries in SharedPreferences, shared between the app and the overlay.
+  Entries are collapsed to one scannable line and expand in place; single entries can be deleted.
 
 ## Current Status
 
@@ -92,8 +114,19 @@ app/src/main/java/com/example/tldr_ai/
 - [x] Share-sheet integration (`ShareReceiverActivity`)
 - [x] Floating overlay card that summarizes shared links without opening the app
 
+### Phase 5 — UI redesign (Complete)
+- [x] Fixed ink/paper palette, full type scale, serif reading face
+- [x] Single auto-detecting input, bottom-anchored composer with one round action
+- [x] Verdict meter replacing the percentage progress bar
+- [x] Model bottom sheet replacing the dropdown
+- [x] Scannable, expandable history with per-item delete
+- [x] Overlay card restyled to match
+
 ### Next
-- [ ] Better error handling and retry logic
+- [ ] Better error handling: `fetchUrl` treats captive-portal/block pages as article content, so a
+      dead link comes back as a confident "no content" *summary* instead of an error. `ErrorView`
+      only shows on real transport failures.
+- [ ] Retry logic beyond the manual "Try again" action
 - [ ] Compose-based floating card (currently classic Views)
 
 ## Git Conventions

@@ -22,6 +22,31 @@ enum class InputMode {
     TEXT
 }
 
+private val URL_SHAPED = Regex(
+    "^(https?://)?([\\w-]+\\.)+[a-z]{2,}(:\\d+)?([/?#]\\S*)?$",
+    RegexOption.IGNORE_CASE
+)
+
+/**
+ * Guesses whether the user handed us a link or an article body, so they never have to pick a
+ * mode. Anything containing whitespace is prose; a single URL-shaped token is a link.
+ */
+fun detectInputMode(raw: String): InputMode {
+    val trimmed = raw.trim()
+    if (trimmed.isEmpty() || trimmed.any(Char::isWhitespace)) return InputMode.TEXT
+    return if (URL_SHAPED.matches(trimmed)) InputMode.URL else InputMode.TEXT
+}
+
+/** Adds the scheme a pasted `example.com/article` is missing, so OkHttp can parse it. */
+fun normalizeUrl(raw: String): String {
+    val trimmed = raw.trim()
+    return if (trimmed.startsWith("http://", true) || trimmed.startsWith("https://", true)) {
+        trimmed
+    } else {
+        "https://$trimmed"
+    }
+}
+
 /**
  * UI state for the main screen.
  */

@@ -2,42 +2,41 @@ package com.example.tldr_ai
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.History
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.Modifier
 import androidx.lifecycle.ViewModelProvider
 import com.example.tldr_ai.ui.screens.HistoryScreen
 import com.example.tldr_ai.ui.screens.MainScreen
 import com.example.tldr_ai.ui.theme.TldraiTheme
+import com.example.tldr_ai.ui.theme.palette
 import com.example.tldr_ai.ui.viewmodel.MainViewModel
+
+private enum class Route { Home, History }
 
 class MainActivity : ComponentActivity() {
 
     private lateinit var viewModel: MainViewModel
 
-    @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -51,94 +50,61 @@ class MainActivity : ComponentActivity() {
                 val selectedModel by viewModel.selectedModel.collectAsState()
                 val models by viewModel.models.collectAsState()
 
-                var selectedTab by remember { mutableIntStateOf(0) }
-                var showClearDialog by remember { mutableStateOf(false) }
+                var route by rememberSaveable { mutableStateOf(Route.Home) }
 
-                if (showClearDialog) {
-                    AlertDialog(
-                        onDismissRequest = { showClearDialog = false },
-                        title = { Text("Clear history") },
-                        text = { Text("Are you sure you want to delete all saved summaries?") },
-                        confirmButton = {
-                            TextButton(onClick = {
-                                viewModel.clearHistory()
-                                showClearDialog = false
-                            }) {
-                                Text("Clear", color = MaterialTheme.colorScheme.error)
+                BackHandler(enabled = route != Route.Home) { route = Route.Home }
+
+                Surface(modifier = Modifier.fillMaxSize(), color = palette.background) {
+                    AnimatedContent(
+                        targetState = route,
+                        transitionSpec = {
+                            val forward = targetState == Route.History
+                            val duration = tween<Float>(260)
+                            if (forward) {
+                                (slideInHorizontally(tween(260)) { it } + fadeIn(duration))
+                                    .togetherWith(
+                                        slideOutHorizontally(tween(260)) { -it / 8 } +
+                                                fadeOut(duration)
+                                    )
+                            } else {
+                                (slideInHorizontally(tween(260)) { -it / 8 } + fadeIn(duration))
+                                    .togetherWith(
+                                        slideOutHorizontally(tween(260)) { it } + fadeOut(duration)
+                                    )
                             }
                         },
-                        dismissButton = {
-                            TextButton(onClick = { showClearDialog = false }) {
-                                Text("Cancel")
+                        label = "route"
+                    ) { current ->
+                        // safeDrawing rather than a Scaffold: there are no system bars of our own
+                        // to reserve space for any more, and it keeps the keyboard from covering
+                        // the composer.
+                        val insets = Modifier
+                            .fillMaxSize()
+                            .windowInsetsPadding(WindowInsets.safeDrawing)
+
+                        when (current) {
+                            Route.Home -> Box(insets) {
+                                MainScreen(
+                                    uiState = uiState,
+                                    onSummarize = { mode, input ->
+                                        viewModel.summarize(mode, input)
+                                    },
+                                    selectedModel = selectedModel,
+                                    models = models,
+                                    onModelSelected = { viewModel.setModel(it) },
+                                    onOpenHistory = { route = Route.History }
+                                )
+                            }
+
+                            Route.History -> Box(insets) {
+                                HistoryScreen(
+                                    items = historyItems,
+                                    onBack = { route = Route.Home },
+                                    onDelete = { viewModel.deleteHistoryItem(it) },
+                                    onClearAll = { viewModel.clearHistory() }
+                                )
                             }
                         }
-                    )
-                }
-
-                Scaffold(
-                    topBar = {
-                        TopAppBar(
-                            title = {
-                                Text(
-                                    text = if (selectedTab == 0) "TL;DR" else "History",
-                                    style = MaterialTheme.typography.headlineMedium
-                                )
-                            },
-                            actions = {
-                                if (selectedTab == 1 && historyItems.isNotEmpty()) {
-                                    IconButton(onClick = { showClearDialog = true }) {
-                                        Icon(
-                                            imageVector = Icons.Default.Delete,
-                                            contentDescription = "Clear history"
-                                        )
-                                    }
-                                }
-                            },
-                            colors = TopAppBarDefaults.topAppBarColors(
-                                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                                titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                            )
-                        )
-                    },
-                    bottomBar = {
-                        NavigationBar {
-                            NavigationBarItem(
-                                selected = selectedTab == 0,
-                                onClick = { selectedTab = 0 },
-                                icon = {
-                                    Icon(Icons.Default.Home, contentDescription = "Summarize")
-                                },
-                                label = { Text("Summarize") }
-                            )
-                            NavigationBarItem(
-                                selected = selectedTab == 1,
-                                onClick = { selectedTab = 1 },
-                                icon = {
-                                    Icon(Icons.Default.History, contentDescription = "History")
-                                },
-                                label = { Text("History") }
-                            )
-                        }
-                    }
-                ) { paddingValues ->
-                    val topPadding = paddingValues.calculateTopPadding()
-                    val bottomPadding = paddingValues.calculateBottomPadding()
-
-                    when (selectedTab) {
-                        0 -> MainScreen(
-                            uiState = uiState,
-                            onSummarize = { mode, input -> viewModel.summarize(mode, input) },
-                            selectedModel = selectedModel,
-                            models = models,
-                            onModelSelected = { viewModel.setModel(it) },
-                            topPadding = topPadding,
-                            bottomPadding = bottomPadding
-                        )
-                        1 -> HistoryScreen(
-                            items = historyItems,
-                            topPadding = topPadding,
-                            bottomPadding = bottomPadding + 8.dp
-                        )
                     }
                 }
             }

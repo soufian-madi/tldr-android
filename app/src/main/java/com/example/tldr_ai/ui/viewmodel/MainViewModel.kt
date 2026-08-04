@@ -10,6 +10,7 @@ import com.example.tldr_ai.data.model.StreamEvent
 import com.example.tldr_ai.data.model.SummaryResult
 import com.example.tldr_ai.data.model.Models
 import com.example.tldr_ai.data.model.SummaryUiState
+import com.example.tldr_ai.data.model.normalizeUrl
 import com.example.tldr_ai.data.repository.HistoryRepository
 import com.example.tldr_ai.data.repository.ModelCatalogRepository
 import com.example.tldr_ai.data.repository.SettingsRepository
@@ -83,7 +84,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             val text = when (mode) {
                 InputMode.TEXT -> input
                 InputMode.URL -> {
-                    val fetchResult = repository.fetch(input)
+                    val fetchResult = repository.fetch(normalizeUrl(input))
                     if (fetchResult.isFailure) {
                         _uiState.value = SummaryUiState.Error(
                             fetchResult.exceptionOrNull()?.message ?: "Failed to fetch article"
@@ -134,6 +135,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun refreshHistory() {
+        _historyItems.value = historyRepository.getItems()
+    }
+
+    fun deleteHistoryItem(item: HistoryItem) {
+        historyRepository.removeItem(item.id)
         _historyItems.value = historyRepository.getItems()
     }
 

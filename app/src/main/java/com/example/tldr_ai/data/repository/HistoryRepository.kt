@@ -35,6 +35,11 @@ class HistoryRepository(context: Context) {
         prefs.edit().putString(KEY_ITEMS, gson.toJson(items)).apply()
     }
 
+    fun removeItem(id: String) {
+        val items = getItems().filterNot { it.id == id }
+        prefs.edit().putString(KEY_ITEMS, gson.toJson(items)).apply()
+    }
+
     fun clearAll() {
         prefs.edit().remove(KEY_ITEMS).apply()
     }

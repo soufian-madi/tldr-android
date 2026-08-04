@@ -6,6 +6,7 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
 import android.content.Intent
+import android.content.res.ColorStateList
 import android.graphics.PixelFormat
 import android.os.IBinder
 import android.view.Gravity
@@ -18,6 +19,7 @@ import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.cardview.widget.CardView
 import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
 import com.example.tldr_ai.R
 import com.example.tldr_ai.data.api.ClaudeApiService
 import com.example.tldr_ai.data.model.HistoryItem
@@ -198,6 +200,7 @@ class FloatingCardService : Service() {
     private fun loadSummary(url: String) {
         expandedView?.let { view ->
             val loadingLayout = view.findViewById<View>(R.id.loadingLayout)
+            val loadingLabel = view.findViewById<TextView>(R.id.loadingLabel)
             val loadingStatusText = view.findViewById<TextView>(R.id.loadingStatusText)
             val contentLayout = view.findViewById<View>(R.id.contentLayout)
             val titleText = view.findViewById<TextView>(R.id.titleText)
@@ -207,7 +210,9 @@ class FloatingCardService : Service() {
             val errorText = view.findViewById<TextView>(R.id.errorText)
 
             loadingLayout.visibility = View.VISIBLE
-            loadingStatusText.text = "Fetching article..."
+            loadingLabel.text = "READING THE ARTICLE"
+            loadingStatusText.visibility = View.GONE
+            loadingStatusText.text = ""
             contentLayout.visibility = View.GONE
             errorText.visibility = View.GONE
 
@@ -223,7 +228,7 @@ class FloatingCardService : Service() {
                     return@launch
                 }
 
-                loadingStatusText.text = "Waiting for AI response..."
+                loadingLabel.text = "THINKING"
 
                 val reasoning = StringBuilder()
                 repository.summarizeStream(fetchResult.getOrThrow(), model).collect { event ->
@@ -231,6 +236,7 @@ class FloatingCardService : Service() {
                         is StreamEvent.Reasoning -> {
                             // Faint live reasoning (gpt-* models only); show the newest text.
                             reasoning.append(event.delta)
+                            loadingStatusText.visibility = View.VISIBLE
                             loadingStatusText.text = reasoning.toString()
                         }
 
@@ -270,17 +276,20 @@ class FloatingCardService : Service() {
         summaryText: TextView
     ) {
         titleText.text = summary.originalTitle ?: "Article"
-        scoreText.text = "${summary.clickbaitScore}%"
-        scoreBar.progress = summary.clickbaitScore
+        titleText.visibility = if (summary.originalTitle.isNullOrBlank()) View.GONE else View.VISIBLE
+        scoreBar.progress = summary.clickbaitScore.coerceIn(4, 100)
         summaryText.text = summary.summary
 
-        // Color based on score
-        val color = when {
-            summary.clickbaitScore <= 30 -> 0xFF4CAF50.toInt() // Green
-            summary.clickbaitScore <= 60 -> 0xFFFF9800.toInt() // Orange
-            else -> 0xFFF44336.toInt() // Red
+        // Verdict, not a percentage — same wording and colours as the in-app meter.
+        val (label, colorRes) = when {
+            summary.clickbaitScore <= 30 -> "INFORMATIVE" to R.color.verdict_calm
+            summary.clickbaitScore <= 60 -> "SOME SPIN" to R.color.verdict_spin
+            else -> "PURE CLICKBAIT" to R.color.verdict_bait
         }
+        val color = ContextCompat.getColor(this, colorRes)
+        scoreText.text = label
         scoreText.setTextColor(color)
+        scoreBar.progressTintList = ColorStateList.valueOf(color)
     }
 
     private fun closeCard() {
