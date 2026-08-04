@@ -16,9 +16,9 @@ import java.util.concurrent.TimeUnit
  * API key can actually call instead of a hardcoded list.
  *
  * Only OpenAI and Anthropic models are kept; other providers (e.g. Gemini) are dropped
- * because [ModelFamily] has no request shape for them. Deprecated entries are dropped too —
- * the gateway still routes them, but it also names a replacement, so there is no reason to
- * offer them.
+ * because [ModelFamily] has no request shape for them. Superseded entries are dropped too:
+ * anything carrying a `replacementModelId` (whatever its value) or marked
+ * `lifecycle: deprecated` is an old model the gateway still routes but has replaced.
  */
 class ModelCatalogService {
 
@@ -68,7 +68,7 @@ class ModelCatalogService {
     internal fun parseCatalog(body: String): List<AiModel> {
         val catalog = gson.fromJson(body, CatalogResponse::class.java)
         return catalog?.models.orEmpty()
-            .filter { it.id != null && it.lifecycle != "deprecated" }
+            .filter { it.id != null && it.replacementModelId == null && it.lifecycle != "deprecated" }
             .mapNotNull { entry ->
                 val family = when (entry.provider) {
                     "openai" -> ModelFamily.OPENAI
@@ -101,6 +101,8 @@ class ModelCatalogService {
         val id: String?,
         val provider: String?,
         val aliases: List<String>?,
-        val lifecycle: String?
+        val lifecycle: String?,
+        /** Present only on superseded models; its mere presence disqualifies the entry. */
+        val replacementModelId: String?
     )
 }

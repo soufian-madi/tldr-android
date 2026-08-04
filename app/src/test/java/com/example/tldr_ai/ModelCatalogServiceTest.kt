@@ -21,6 +21,10 @@ class ModelCatalogServiceTest {
         { "id": "anthropic-claude-opus-4-7", "aliases": ["claude-opus-4-7"],
           "provider": "anthropic", "backend": "thirdparty",
           "lifecycle": "deprecated", "replacementModelId": "anthropic-claude-opus-4-8" },
+        { "id": "openai-gpt-5.3", "aliases": ["gpt-5.3"], "provider": "openai",
+          "backend": "primary", "replacementModelId": "openai-gpt-5.4" },
+        { "id": "openai-gpt-5.2", "aliases": ["gpt-5.2"], "provider": "openai",
+          "backend": "primary", "replacementModelId": "" },
         { "id": "anthropic-claude-haiku-4-5", "aliases": ["claude-haiku-4-5", "anthropic-claude-haiku-4-5"],
           "provider": "anthropic", "backend": "thirdparty" },
         { "id": "anthropic-direct-claude-fable-5", "aliases": ["direct-claude-fable-5", "anthropic-direct-claude-fable-5"],
@@ -39,8 +43,17 @@ class ModelCatalogServiceTest {
             listOf("gpt-5.6-sol", "gpt-5-mini", "claude-haiku-4-5", "direct-claude-fable-5"),
             models.map { it.id }
         )
-        // Gemini has no request shape, the 4-7 entry is deprecated — both dropped.
+        // Gemini has no request shape, the 4-7 entry is superseded — both dropped.
         assertTrue(models.none { it.id.contains("gemini") || it.id.contains("4-7") })
+    }
+
+    @Test
+    fun parseCatalog_dropsAnyModelCarryingAReplacementId() {
+        val models = ModelCatalogService().parseCatalog(catalogJson)
+
+        // gpt-5.3 names a replacement without being flagged deprecated, and gpt-5.2 carries an
+        // empty replacement id: the attribute's presence alone disqualifies both.
+        assertTrue(models.none { it.id == "gpt-5.3" || it.id == "gpt-5.2" })
     }
 
     @Test
