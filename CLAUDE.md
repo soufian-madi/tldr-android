@@ -31,7 +31,7 @@ The key differentiator: **the more clickbaity the article, the shorter the respo
 - **UI:** Jetpack Compose with Material 3 + Dynamic Colors
 - **Min SDK:** 30 (Android 11)
 - **Target SDK:** 36
-- **AI:** Claude API (claude-opus-4-5-20251101)
+- **AI:** Claude API direct, plus a gateway catalog exposing Claude and GPT models (user-selectable)
 - **Networking:** OkHttp
 
 ## Project Structure
@@ -73,7 +73,8 @@ app/src/main/java/com/example/tldr_ai/
 
 ### Phase 3 (In Progress)
 - [x] URL fetching with HTML preprocessing
-- [ ] History/saved summaries
+- [x] History/saved summaries
+- [x] Multi-model picker (Claude + GPT, loaded from the gateway catalog)
 - [ ] Better error handling and retry logic
 
 ## Git Conventions
