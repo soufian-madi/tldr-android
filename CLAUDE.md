@@ -31,32 +31,42 @@ The key differentiator: **the more clickbaity the article, the shorter the respo
 - **UI:** Jetpack Compose with Material 3 + Dynamic Colors
 - **Min SDK:** 30 (Android 11)
 - **Target SDK:** 36
-- **AI:** Claude API direct, plus a gateway catalog exposing Claude and GPT models (user-selectable)
-- **Networking:** OkHttp
+- **AI:** All requests go through the AI gateway (`ao-ai-api-management`), which exposes both
+  Claude and GPT models. The user picks one; the model list is fetched from the gateway catalog.
+- **Networking:** OkHttp (SSE streaming), Gson
+- **Persistence:** SharedPreferences (history + selected model)
 
 ## Project Structure
 
 ```
 app/src/main/java/com/example/tldr_ai/
-├── MainActivity.kt
+├── MainActivity.kt                # Scaffold + bottom nav (Summarize / History)
+├── ShareReceiverActivity.kt       # Transparent activity for Android share-sheet intents
+├── floatingcard/
+│   └── FloatingCardService.kt     # Overlay foreground service (classic Views, not Compose)
 ├── data/
 │   ├── api/
-│   │   └── ClaudeApiService.kt    # Claude API client
-│   ├── model/
-│   │   └── SummaryResult.kt       # Data models & UI state
-│   └── repository/
-│       └── SummaryRepository.kt   # Repository layer
+│   │   ├── ClaudeApiService.kt    # Gateway client: URL fetch + streaming summarize
+│   │   ├── ModelCatalogService.kt # Fetches available models from the gateway
+│   │   └── Gateway.kt             # Gateway base URL
+│   ├── model/                     # SummaryResult, AiModel, HistoryItem, UI/stream state
+│   └── repository/                # Summary, History, ModelCatalog, Settings
 └── ui/
-    ├── components/
-    │   ├── ClickbaitIndicator.kt  # Visual clickbait score
-    │   ├── InputSection.kt        # URL/Text input with tabs
-    │   └── SummaryCard.kt         # Result display card
-    ├── screens/
-    │   └── MainScreen.kt          # Main UI screen
-    ├── viewmodel/
-    │   └── MainViewModel.kt       # UI state management
+    ├── components/                # ClickbaitIndicator, InputSection, SummaryCard, HistoryItemCard
+    ├── screens/                   # MainScreen, HistoryScreen
+    ├── viewmodel/MainViewModel.kt # UI state via StateFlow
     └── theme/
 ```
+
+## Key Behaviours
+
+- **Two entry points:** the full app, and a share-sheet flow — sharing a link from any app
+  spawns a floating overlay card that summarizes in place, without opening the app.
+- **Streaming:** responses stream over SSE. Live reasoning text is shown faintly while it
+  arrives, but only for OpenAI models — the gateway redacts Anthropic thinking.
+- **Model routing:** OpenAI models hit `/v1/responses`, Anthropic models hit
+  `/chat/completions`, selected via the `x-model` header with the catalog's *short* alias.
+- **History:** last 50 summaries in SharedPreferences, shared between the app and the overlay.
 
 ## Current Status
 
@@ -68,14 +78,23 @@ app/src/main/java/com/example/tldr_ai/
 
 ### Phase 2 (Complete)
 - [x] ViewModel with StateFlow
-- [x] Claude API integration
+- [x] Gateway API integration
 - [x] AI-powered clickbait detection and summarization
 
-### Phase 3 (In Progress)
+### Phase 3 (Complete)
 - [x] URL fetching with HTML preprocessing
-- [x] History/saved summaries
+- [x] History/saved summaries (with clear-all confirmation)
 - [x] Multi-model picker (Claude + GPT, loaded from the gateway catalog)
+- [x] Streaming responses with live reasoning display
+- [x] Regex fallback parser for malformed JSON responses
+
+### Phase 4 (Complete)
+- [x] Share-sheet integration (`ShareReceiverActivity`)
+- [x] Floating overlay card that summarizes shared links without opening the app
+
+### Next
 - [ ] Better error handling and retry logic
+- [ ] Compose-based floating card (currently classic Views)
 
 ## Git Conventions
 
@@ -84,9 +103,10 @@ app/src/main/java/com/example/tldr_ai/
 
 ## Setup
 
-1. Add your Claude API key to `local.properties`:
+1. Add your gateway API key to `local.properties` (the property name is historical — it is the
+   gateway's `x-api-key`, not an Anthropic key):
 ```properties
-CLAUDE_API_KEY=sk-ant-xxxxx
+CLAUDE_API_KEY=xxxxx
 ```
 
 2. Build and run:
@@ -99,3 +119,5 @@ CLAUDE_API_KEY=sk-ant-xxxxx
 
 - API key is loaded from `local.properties` (gitignored) via BuildConfig
 - Never commit API keys to the repository
+- The floating card needs the "Display over other apps" permission granted manually on device
+- The `/android-device` skill drives the phone over adb (screenshots, taps, logcat)
