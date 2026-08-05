@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  B — reduction — adaptive-icon foreground layer for TL;DR.
+
+  Three faint lines of noise collapse into one heavy line and a full stop.
+
+  Drawn in the 108x108 adaptive viewport: only the central 72x72 is ever visible
+  and only the r=33 circle around (54,54) is mask-safe, so the mark is centred and
+  scaled to stay inside that circle on round, squircle and teardrop masks alike.
+  White fill on purpose — the same layer is reused as the <monochrome> layer, where
+  the system supplies its own tint and only shape and alpha survive.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <group
+        android:pivotX="52.0"
+        android:pivotY="53.7"
+        android:scaleX="1.0"
+        android:scaleY="1.0"
+        android:translateX="2.0"
+        android:translateY="0.3">
+
+        <!-- noise -->
+        <path
+            android:pathData="M30.1,32.0 H73.9 A2.1,2.1 0 0 1 73.9,36.2 H30.1 A2.1,2.1 0 0 1 30.1,32.0 Z"
+            android:fillColor="#FFFFFF"
+            android:fillAlpha="0.42"
+            android:fillType="evenOdd" />
+        <!-- noise -->
+        <path
+            android:pathData="M30.1,43.6 H73.9 A2.1,2.1 0 0 1 73.9,47.800000000000004 H30.1 A2.1,2.1 0 0 1 30.1,43.6 Z"
+            android:fillColor="#FFFFFF"
+            android:fillAlpha="0.42"
+            android:fillType="evenOdd" />
+        <!-- noise -->
+        <path
+            android:pathData="M30.1,55.2 H59.9 A2.1,2.1 0 0 1 59.9,59.400000000000006 H30.1 A2.1,2.1 0 0 1 30.1,55.2 Z"
+            android:fillColor="#FFFFFF"
+            android:fillAlpha="0.42"
+            android:fillType="evenOdd" />
+        <!-- the answer -->
+        <path
+            android:pathData="M33.0,65.4 H45.0 A5.0,5.0 0 0 1 45.0,75.4 H33.0 A5.0,5.0 0 0 1 33.0,65.4 Z"
+            android:fillColor="#FFFFFF"
+            android:fillType="evenOdd" />
+        <!-- full stop -->
+        <path
+            android:pathData="M53.5,70.4 a5,5 0 1,1 10,0 a5,5 0 1,1 -10,0 Z"
+            android:fillColor="#FFFFFF"
+            android:fillType="evenOdd" />
+
+    </group>
+
+</vector>
