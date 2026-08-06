@@ -72,7 +72,7 @@ class ClaudeApiService {
     /**
      * Preprocesses HTML to reduce token usage by removing non-content elements.
      */
-    private fun preprocessHtml(html: String): String {
+    internal fun preprocessHtml(html: String): String {
         var cleaned = html
 
         // Remove script tags and content
@@ -215,7 +215,7 @@ class ClaudeApiService {
      * (kind, text) pair where kind is "reason" or "answer". Returns null for housekeeping
      * events (signatures, lifecycle markers, errors). Mirrors the jq filter in chat.sh.
      */
-    private fun extractDelta(payload: String): Pair<String, String>? {
+    internal fun extractDelta(payload: String): Pair<String, String>? {
         return try {
             val obj = JsonParser.parseString(payload).asJsonObject
             when (obj.get("type")?.asString) {
@@ -275,7 +275,7 @@ $articleText
         """.trimIndent()
     }
 
-    private fun parseResponse(content: String): Result<SummaryResult> {
+    internal fun parseResponse(content: String): Result<SummaryResult> {
         var cleaned = content.trim()
         if (cleaned.startsWith("```")) {
             cleaned = cleaned.substringAfter("\n").substringBeforeLast("```").trim()
