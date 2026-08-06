@@ -149,6 +149,9 @@ app/src/main/java/com/example/tldr_ai/
 
 - Commit messages must be 100 characters or less
 - Always commit after making code changes, without waiting for explicit prompting
+- Code changes require unit test coverage for the logic they touch. A pre-commit hook
+  (`.githooks/pre-commit`, wired up via `git config core.hooksPath .githooks` — run that once per
+  clone) runs `./gradlew testDebugUnitTest` and blocks the commit if any test fails.
 
 ## Setup
 

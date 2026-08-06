@@ -1,0 +1,12 @@
+#!/bin/sh
+# Blocks the commit if the JVM unit test suite fails. See CLAUDE.md "Git Conventions".
+# Installed via: git config core.hooksPath .githooks
+
+echo "Running unit tests before commit..."
+./gradlew testDebugUnitTest -q
+
+if [ $? -ne 0 ]; then
+    echo ""
+    echo "Unit tests failed — commit aborted. Fix the failures or run with --no-verify to skip."
+    exit 1
+fi
