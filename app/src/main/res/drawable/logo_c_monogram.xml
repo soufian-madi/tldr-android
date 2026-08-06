@@ -1,14 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  C — monogram — adaptive-icon foreground layer for TL;DR.
+  The TL;DR mark: the wordmark itself, not a metaphor. Two lines of constructed
+  grotesque at the weight and fit of WordmarkStyle, both rows on the same cap height
+  and flush to the same left and right edges so the lockup reads as one solid block.
 
-  The wordmark as a mark: same black weight and tight fit as WordmarkStyle, semicolon muted exactly as wordmark() mutes it.
+  Unlike wordmark(), the semicolon here is NOT muted. This same layer is the
+  <monochrome> themed-icon layer, where the system throws away the fill and paints the
+  silhouette in one tint: a translucent element survives only as a low-contrast patch,
+  and can wash out completely in a light Material You theme. At 48dp it also stopped
+  reading as a semicolon and started reading as a smudge.
 
-  Drawn in the 108x108 adaptive viewport: only the central 72x72 is ever visible
-  and only the r=33 circle around (54,54) is mask-safe, so the mark is centred and
-  scaled to stay inside that circle on round, squircle and teardrop masks alike.
-  White fill on purpose — the same layer is reused as the <monochrome> layer, where
-  the system supplies its own tint and only shape and alpha survive.
+  The comma is one closed contour, bowl and tail in a single non-overlapping outline.
+  Drawn as two overlapping subpaths it looked correct in isolation and then lost a bite
+  out of its middle, because evenOdd cancels where subpaths overlap.
+
+  Drawn in the 108x108 adaptive viewport: only the central 72x72 is ever visible, and
+  only the r=33 circle around (54,54) is mask-safe, so the lockup is centred and scaled
+  to stay inside that circle. Fill is plain white; the colour it reads as comes from the
+  ink background underneath it, or from the system tint in the monochrome case.
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
@@ -17,34 +26,32 @@
     android:viewportHeight="108">
 
     <group
-        android:pivotX="55.15"
-        android:pivotY="55.6"
-        android:scaleX="0.94"
-        android:scaleY="0.94"
-        android:translateX="-1.15"
-        android:translateY="-1.5">
+        android:pivotX="55.25"
+        android:pivotY="55.25"
+        android:scaleX="0.9"
+        android:scaleY="0.9"
+        android:translateX="-1.25"
+        android:translateY="-1.25">
 
         <!-- T -->
         <path
-            android:pathData="M31,30 H49 V35.5 H43.25 V51 H36.75 V35.5 H31 Z"
+            android:pathData="M31,29.5 H49 V35 H43.25 V52.5 H36.75 V35 H31 Z"
             android:fillColor="#FFFFFF"
             android:fillType="evenOdd" />
         <!-- L -->
         <path
-            android:pathData="M52,30 H58.5 V45.5 H70 V51 H52 Z"
+            android:pathData="M52,29.5 H58.5 V47 H70 V52.5 H52 Z"
             android:fillColor="#FFFFFF"
             android:fillType="evenOdd" />
-        <!-- ; dot, on the x-height -->
+        <!-- ; dot -->
         <path
-            android:pathData="M72.5,38 a3.4,3.4 0 1,1 6.8,0 a3.4,3.4 0 1,1 -6.8,0 Z"
+            android:pathData="M72.5,38.8 a3.4,3.4 0 1,1 6.8,0 a3.4,3.4 0 1,1 -6.8,0 Z"
             android:fillColor="#FFFFFF"
-            android:fillAlpha="0.6"
             android:fillType="evenOdd" />
-        <!-- ; comma, straddling the baseline -->
+        <!-- ; comma -->
         <path
-            android:pathData="M72.5,49.9 a3.4,3.4 0 1,1 6.8,0 a3.4,3.4 0 1,1 -6.8,0 ZM79,49.5 C78.9,53.4 77,55.7 73.7,56.8 C72.2,57.3 71.5,55.2 72.8,54.5 C74.6,53.5 75.6,51.9 75.5,50 Z"
+            android:pathData="M79.3,48.8 A3.4,3.4 0 0 0 72.5,48.8 C72.45,51.2 72.4,53.5 72.4,55.4 C74.8,54.5 78.4,52.8 79.3,48.8 Z"
             android:fillColor="#FFFFFF"
-            android:fillAlpha="0.6"
             android:fillType="evenOdd" />
         <!-- D -->
         <path

@@ -42,15 +42,22 @@ verdict hues.
   shown as a tappable chip in case the guess is wrong.
 - **Layout:** composer pinned at the bottom within thumb reach; the answer rises out of it and is
   the only region that scrolls. No top app bar, no bottom nav.
-- **The mark:** the launcher icon is the wordmark, not a metaphor — `TL;DR` set on two lines in the
-  same black weight and tight fit as `WordmarkStyle`, paper on ink, with the semicolon muted exactly
-  as `wordmark()` mutes it. Deliberately no sparkle, star, nebula or violet: the AI-cliché signals
-  say nothing about *this* app, and violet would break the one-hue-means-one-thing rule.
-  `drawable/logo_c_monogram.xml` is live; `logo_a_semicolon` and `logo_b_reduction` are kept as
-  rejected alternates, previewable via the `mipmap-anydpi/ic_launcher_alt_*.xml` aliases.
-  Geometry is drawn in the 108 viewport and kept inside the r=33 safe circle so round, squircle and
-  teardrop masks all crop cleanly. The foreground doubles as the `<monochrome>` themed-icon layer,
-  so it is white-on-transparent and carries its emphasis in alpha rather than colour.
+- **The mark** (`drawable/logo_c_monogram.xml`): the launcher icon is the wordmark, not a metaphor —
+  `TL;DR` on two lines in the same black weight and tight fit as `WordmarkStyle`, paper on ink.
+  Deliberately no sparkle, star, nebula or violet: those signals say nothing about *this* app, and a
+  violet would break the one-hue-means-one-thing rule. Both rows sit on one cap height and are flush
+  to the same left and right edges, so the lockup reads as a single block rather than two ragged
+  lines. Geometry lives in the 108 viewport inside the r=33 safe circle, so round, squircle and
+  teardrop masks all crop cleanly.
+- **The icon does not mute its semicolon**, though `wordmark()` does. The foreground doubles as the
+  `<monochrome>` themed-icon layer, where the system discards the fill and paints the silhouette in
+  one tint — a translucent element survives only as a low-contrast patch and can wash out entirely in
+  a light Material You theme. At 48dp it also stopped reading as a semicolon and became a smudge.
+  Emphasis in that layer has to come from shape, not alpha.
+- **The `mipmap-*/ic_launcher*.webp` rasters are dead weight**, kept only so the repo holds no stale
+  art: `aapt2 dump badging` shows every density resolving to `mipmap-anydpi-v21/ic_launcher.xml`, and
+  minSdk is 30. They are encoded **lossless** (VP8L) — lossy webp puts a visible bevel of ringing
+  around the glyph edges at these sizes. Regenerate them from the drawable if the mark changes.
 
 ## Tech Stack
 

@@ -108,6 +108,22 @@ class ClaudeApiService {
         // Remove iframe elements
         cleaned = cleaned.replace(Regex("<iframe[^>]*>[\\s\\S]*?</iframe>", RegexOption.IGNORE_CASE), "")
 
+        // Strip all remaining tags (attributes like class/style/data-*/href are the bulk of
+        // the token cost by this point; only the text between tags carries meaning), keeping
+        // a space so words from adjacent block-level elements don't run together.
+        cleaned = cleaned.replace(Regex("<[^>]+>"), " ")
+
+        // Decode the handful of HTML entities that actually show up in article text.
+        cleaned = cleaned
+            .replace(Regex("&#(\\d+);")) { it.groupValues[1].toIntOrNull()?.toChar()?.toString() ?: it.value }
+            .replace("&nbsp;", " ")
+            .replace("&amp;", "&")
+            .replace("&lt;", "<")
+            .replace("&gt;", ">")
+            .replace("&quot;", "\"")
+            .replace("&#39;", "'")
+            .replace("&apos;", "'")
+
         // Remove excessive whitespace
         cleaned = cleaned.replace(Regex("\\s+"), " ")
 
@@ -241,7 +257,7 @@ Clickbait signals to look for:
 - "This one trick" / "what happened next" patterns
 - the title does not reflect the essence of the content
 
-Note: The content may be HTML from a webpage. Extract and focus on the main article content, ignoring any remaining navigation, ads, or boilerplate text.
+Note: The content is plain text stripped from a webpage and may still contain leftover navigation, ads, or boilerplate text. Extract and focus on the main article content, ignoring that boilerplate.
 
 Summery structure: one important goal is to answer questions that may arise when reading the title. if the title already raises a question it must be answered in the summary, otherwise
 try to articulate (to yourself) the most probable question a user WOULD have upon reading this title and answer it in the summery.
