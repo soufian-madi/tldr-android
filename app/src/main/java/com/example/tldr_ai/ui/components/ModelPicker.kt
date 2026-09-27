@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Check
@@ -67,19 +69,21 @@ fun ModelSheet(
             }
         }
     ) {
-        Column(modifier = Modifier.navigationBarsPadding()) {
+        LazyColumn(modifier = Modifier.navigationBarsPadding()) {
             val grouped = models.groupBy { it.family }
             listOf(ModelFamily.ANTHROPIC, ModelFamily.OPENAI).forEach { family ->
                 val entries = grouped[family].orEmpty()
                 if (entries.isEmpty()) return@forEach
 
-                Text(
-                    text = if (family == ModelFamily.ANTHROPIC) "ANTHROPIC" else "OPENAI",
-                    style = OverlineStyle,
-                    color = palette.muted,
-                    modifier = Modifier.padding(start = 24.dp, top = 18.dp, bottom = 6.dp)
-                )
-                entries.forEach { model ->
+                item(key = "${family.name}-header") {
+                    Text(
+                        text = if (family == ModelFamily.ANTHROPIC) "ANTHROPIC" else "OPENAI",
+                        style = OverlineStyle,
+                        color = palette.muted,
+                        modifier = Modifier.padding(start = 24.dp, top = 18.dp, bottom = 6.dp)
+                    )
+                }
+                items(entries, key = { it.id }) { model ->
                     ModelRow(
                         model = model,
                         isSelected = model.id == selected.id,
@@ -88,12 +92,14 @@ fun ModelSheet(
                 }
             }
 
-            Text(
-                text = "Thinking is only visible while GPT models work; the gateway hides it for Claude.",
-                style = MaterialTheme.typography.bodySmall,
-                color = palette.muted,
-                modifier = Modifier.padding(start = 24.dp, end = 24.dp, top = 20.dp, bottom = 24.dp)
-            )
+            item(key = "thinking-note") {
+                Text(
+                    text = "Thinking is only visible while GPT models work; the gateway hides it for Claude.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = palette.muted,
+                    modifier = Modifier.padding(start = 24.dp, end = 24.dp, top = 20.dp, bottom = 24.dp)
+                )
+            }
         }
     }
 }
