@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="window_background">#0A0B0D</color>
+
+    <color name="card_surface">#121418</color>
+    <color name="card_surface_high">#1B1F24</color>
+    <color name="card_outline">#262B31</color>
+    <color name="card_on_surface">#EDEFF2</color>
+    <color name="card_muted">#8A9199</color>
+    <color name="card_scrim">#CC000000</color>
+    <color name="verdict_calm">#74D6A3</color>
+    <color name="verdict_spin">#E6B265</color>
+    <color name="verdict_bait">#EF7C6D</color>
+</resources>

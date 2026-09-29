@@ -1,0 +1,5 @@
+# Copy to local.properties (ignored by Git). Android Studio can set sdk.dir for you.
+# sdk.dir=/path/to/Android/Sdk
+GATEWAY_BASE_URL=https://gateway.example.com/ai-gateway
+# Historical property name: this is your gateway key, not an Anthropic API key.
+CLAUDE_API_KEY=

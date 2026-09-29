@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The TL;DR mark: the wordmark itself, not a metaphor. Two lines of constructed
+  grotesque at the weight and fit of WordmarkStyle, both rows on the same cap height
+  and flush to the same left and right edges so the lockup reads as one solid block.
+
+  Unlike wordmark(), the semicolon here is NOT muted. This same layer is the
+  <monochrome> themed-icon layer, where the system throws away the fill and paints the
+  silhouette in one tint: a translucent element survives only as a low-contrast patch,
+  and can wash out completely in a light Material You theme. At 48dp it also stopped
+  reading as a semicolon and started reading as a smudge.
+
+  The comma is one closed contour, bowl and tail in a single non-overlapping outline.
+  Drawn as two overlapping subpaths it looked correct in isolation and then lost a bite
+  out of its middle, because evenOdd cancels where subpaths overlap.
+
+  Drawn in the 108x108 adaptive viewport: only the central 72x72 is ever visible, and
+  only the r=33 circle around (54,54) is mask-safe, so the lockup is centred and scaled
+  to stay inside that circle. Fill is plain white; the colour it reads as comes from the
+  ink background underneath it, or from the system tint in the monochrome case.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <group
+        android:pivotX="55.25"
+        android:pivotY="55.25"
+        android:scaleX="0.9"
+        android:scaleY="0.9"
+        android:translateX="-1.25"
+        android:translateY="-1.25">
+
+        <!-- T -->
+        <path
+            android:pathData="M31,29.5 H49 V35 H43.25 V52.5 H36.75 V35 H31 Z"
+            android:fillColor="#FFFFFF"
+            android:fillType="evenOdd" />
+        <!-- L -->
+        <path
+            android:pathData="M52,29.5 H58.5 V47 H70 V52.5 H52 Z"
+            android:fillColor="#FFFFFF"
+            android:fillType="evenOdd" />
+        <!-- ; dot -->
+        <path
+            android:pathData="M72.5,38.8 a3.4,3.4 0 1,1 6.8,0 a3.4,3.4 0 1,1 -6.8,0 Z"
+            android:fillColor="#FFFFFF"
+            android:fillType="evenOdd" />
+        <!-- ; comma -->
+        <path
+            android:pathData="M79.3,48.8 A3.4,3.4 0 0 0 72.5,48.8 C72.45,51.2 72.4,53.5 72.4,55.4 C74.8,54.5 78.4,52.8 79.3,48.8 Z"
+            android:fillColor="#FFFFFF"
+            android:fillType="evenOdd" />
+        <!-- D -->
+        <path
+            android:pathData="M31,58 H41 C50.5,58 55.5,63.2 55.5,69.5 C55.5,75.8 50.5,81 41,81 H31 ZM37.5,63.5 H41 C46,63.5 48.7,65.6 48.7,69.5 C48.7,73.4 46,75.5 41,75.5 H37.5 Z"
+            android:fillColor="#FFFFFF"
+            android:fillType="evenOdd" />
+        <!-- R -->
+        <path
+            android:pathData="M58.5,58 H69 C75,58 78.5,61.3 78.5,66.2 C78.5,69.6 76.8,72 73.8,73.1 L79.5,81 H71.6 L66.6,73.4 H65 V81 H58.5 ZM65,63.4 H68.6 C70.8,63.4 71.9,64.4 71.9,66.2 C71.9,68 70.8,69 68.6,69 H65 Z"
+            android:fillColor="#FFFFFF"
+            android:fillType="evenOdd" />
+
+    </group>
+
+</vector>
