@@ -9,10 +9,8 @@ enum class ModelFamily { OPENAI, ANTHROPIC }
 /**
  * A model the user can pick.
  *
- * [id] is the id sent in the x-model header. This is deliberately the catalog's *short*
- * alias (`claude-haiku-4-5`), not its canonical id (`anthropic-claude-haiku-4-5`): the
- * gateway resolves Anthropic models to Bedrock by the short alias and rejects the canonical
- * form with "No Bedrock mapping for model ...". OpenAI accepts either.
+ * [id] is the exact Nexos catalog ID sent in the request body's model field
+ * (for example `Claude Sonnet 5`).
  *
  * [displayName] is shown in the picker, [aliases] are the other ids the gateway accepts for
  * the same model (including the canonical one) and are used to match a saved selection.
@@ -27,7 +25,7 @@ data class AiModel(
 /**
  * Model catalog helpers.
  *
- * The picker list is loaded at runtime from the gateway's `meta/models` endpoint
+ * The picker list is loaded at runtime from the gateway's `/models` endpoint
  * (see ModelCatalogRepository). [FALLBACK] is only used before the first successful
  * fetch, or when the gateway is unreachable and nothing has been cached yet.
  *
@@ -37,11 +35,11 @@ data class AiModel(
  */
 object Models {
     val FALLBACK = listOf(
-        AiModel("gpt-5-mini", "GPT-5 mini", ModelFamily.OPENAI, listOf("openai-gpt-5-mini")),
-        AiModel("gpt-5.5", "GPT-5.5", ModelFamily.OPENAI, listOf("openai-gpt-5.5")),
-        AiModel("claude-opus-5", "Claude Opus 5", ModelFamily.ANTHROPIC, listOf("anthropic-claude-opus-5")),
-        AiModel("claude-sonnet-5", "Claude Sonnet 5", ModelFamily.ANTHROPIC, listOf("anthropic-claude-sonnet-5")),
-        AiModel("claude-haiku-4-5", "Claude Haiku 4.5", ModelFamily.ANTHROPIC, listOf("anthropic-claude-haiku-4-5")),
+        AiModel("GPT 6 Luna", "GPT 6 Luna", ModelFamily.OPENAI),
+        AiModel("GPT 6.1 Sol", "GPT 6.1 Sol", ModelFamily.OPENAI),
+        AiModel("GPT 5.6 Terra", "GPT 5.6 Terra", ModelFamily.OPENAI),
+        AiModel("Claude Opus 5.5", "Claude Opus 5.5", ModelFamily.ANTHROPIC),
+        AiModel("Claude Sonnet 5", "Claude Sonnet 5", ModelFamily.ANTHROPIC),
     )
 
     val DEFAULT = FALLBACK.first()

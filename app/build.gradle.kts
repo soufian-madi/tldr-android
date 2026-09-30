@@ -25,9 +25,9 @@ android {
         val apiKey = if (localProperties.exists()) {
             val props = Properties()
             localProperties.inputStream().use { stream -> props.load(stream) }
-            props.getProperty("CLAUDE_API_KEY", "")
+            props.getProperty("NEXOS_API_KEY", "")
         } else ""
-        buildConfigField("String", "CLAUDE_API_KEY", "\"$apiKey\"")
+        buildConfigField("String", "NEXOS_API_KEY", "\"$apiKey\"")
     }
 
     buildTypes {

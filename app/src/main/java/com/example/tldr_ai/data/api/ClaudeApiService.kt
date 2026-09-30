@@ -133,43 +133,31 @@ class ClaudeApiService {
     /**
      * Streams a summary for the given article text using the selected model.
      *
-     * Routes by model family: OpenAI models hit /v1/responses (and stream a reasoning
-     * summary), Anthropic models hit /chat/completions (answer only). Reasoning deltas are
-     * emitted live; the answer is accumulated and parsed into a [SummaryResult] at the end.
+     * Both model families use Nexos's OpenAI-compatible chat completions endpoint.
+     * Reasoning deltas, when provided, are emitted live; the answer is accumulated
+     * and parsed into a [SummaryResult] at the end.
      */
     fun summarizeStream(articleText: String, model: AiModel): Flow<StreamEvent> = flow {
-        val apiKey = BuildConfig.CLAUDE_API_KEY
+        val apiKey = BuildConfig.NEXOS_API_KEY
         if (apiKey.isBlank()) {
             emit(StreamEvent.Failure("API key not configured"))
             return@flow
         }
 
         val prompt = buildPrompt(articleText)
-        val (endpoint, jsonBody) = when (model.family) {
-            ModelFamily.OPENAI -> "$GATEWAY/v1/responses" to gson.toJson(
-                ResponsesRequest(
-                    model = model.id,
-                    stream = true,
-                    reasoning = ReasoningCfg(effort = "medium", summary = "auto"),
-                    input = prompt
-                )
-            )
-
-            ModelFamily.ANTHROPIC -> "$GATEWAY/chat/completions" to gson.toJson(
-                ChatRequest(
-                    model = model.id,
-                    stream = true,
-                    maxTokens = 1024,
-                    messages = listOf(Message(role = "user", content = prompt))
-                )
-            )
-        }
+        val endpoint = "$GATEWAY/chat/completions"
+        val jsonBody = gson.toJson(ChatRequest(
+            model = model.id,
+            stream = true,
+            maxTokens = 4096,
+            messages = listOf(Message(role = "user", content = prompt))
+        ))
 
         val request = Request.Builder()
             .url(endpoint)
             .addHeader("Content-Type", "application/json")
-            .addHeader("x-api-key", apiKey)
-            .addHeader("x-model", model.id)
+            .addHeader("Authorization", "Bearer $apiKey")
+            .addHeader("User-Agent", "Mozilla/5.0 TLDR-Android")
             .post(jsonBody.toRequestBody("application/json".toMediaType()))
             .build()
 
@@ -218,6 +206,15 @@ class ClaudeApiService {
     internal fun extractDelta(payload: String): Pair<String, String>? {
         return try {
             val obj = JsonParser.parseString(payload).asJsonObject
+            val chatDelta = obj.getAsJsonArray("choices")?.firstOrNull()?.asJsonObject
+                ?.getAsJsonObject("delta")
+            if (chatDelta != null) {
+                chatDelta.get("content")?.takeUnless { it.isJsonNull }?.asString
+                    ?.takeIf { it.isNotEmpty() }?.let { return "answer" to it }
+                chatDelta.get("reasoning_content")?.takeUnless { it.isJsonNull }?.asString
+                    ?.takeIf { it.isNotEmpty() }?.let { return "reason" to it }
+                return null
+            }
             when (obj.get("type")?.asString) {
                 // OpenAI /v1/responses events
                 "response.reasoning_summary_text.delta" ->

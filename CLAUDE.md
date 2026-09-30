@@ -65,7 +65,7 @@ verdict hues.
 - **UI:** Jetpack Compose with Material 3, fixed (non-dynamic) colour scheme
 - **Min SDK:** 30 (Android 11)
 - **Target SDK:** 36
-- **AI:** All requests go through the AI gateway (`ao-ai-api-management`), which exposes both
+- **AI:** All requests go through Nexos (`https://api.nexos.ai/v1`), which exposes both
   Claude and GPT models. The user picks one; the model list is fetched from the gateway catalog.
 - **Networking:** OkHttp (SSE streaming), Gson
 - **Persistence:** SharedPreferences (history + selected model)
@@ -101,8 +101,8 @@ app/src/main/java/com/example/tldr_ai/
   spawns a floating overlay card that summarizes in place, without opening the app.
 - **Streaming:** responses stream over SSE. Live reasoning text is shown faintly while it
   arrives, but only for OpenAI models — the gateway redacts Anthropic thinking.
-- **Model routing:** OpenAI models hit `/v1/responses`, Anthropic models hit
-  `/chat/completions`, selected via the `x-model` header with the catalog's *short* alias.
+- **Model routing:** Both families use `/chat/completions` with Bearer authentication and
+  the exact Nexos catalog ID in the `model` field. Catalog is fetched from `/models`.
 - **History:** last 50 summaries in SharedPreferences, shared between the app and the overlay.
   Entries are collapsed to one scannable line and expand in place; single entries can be deleted.
 
@@ -155,10 +155,9 @@ app/src/main/java/com/example/tldr_ai/
 
 ## Setup
 
-1. Add your gateway API key to `local.properties` (the property name is historical — it is the
-   gateway's `x-api-key`, not an Anthropic key):
+1. Add your Nexos API key to `local.properties` (gitignored):
 ```properties
-CLAUDE_API_KEY=xxxxx
+NEXOS_API_KEY=xxxxx
 ```
 
 2. Build and run:
