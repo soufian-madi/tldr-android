@@ -4,7 +4,7 @@ package com.example.tldr_ai.data.model
  * Which gateway backend a model is routed to. Determines the endpoint, request body
  * shape, and whether reasoning text is available in the stream.
  */
-enum class ModelFamily { OPENAI, ANTHROPIC }
+enum class ModelFamily { OPENAI, ANTHROPIC, GOOGLE }
 
 /**
  * A model the user can pick.
@@ -40,6 +40,7 @@ object Models {
         AiModel("GPT 5.6 Terra", "GPT 5.6 Terra", ModelFamily.OPENAI),
         AiModel("Claude Opus 5.5", "Claude Opus 5.5", ModelFamily.ANTHROPIC),
         AiModel("Claude Sonnet 5", "Claude Sonnet 5", ModelFamily.ANTHROPIC),
+        AiModel("Gemini 3.5 Flash", "Gemini 3.5 Flash", ModelFamily.GOOGLE),
     )
 
     val DEFAULT = FALLBACK.first()

@@ -71,13 +71,13 @@ fun ModelSheet(
     ) {
         LazyColumn(modifier = Modifier.navigationBarsPadding()) {
             val grouped = models.groupBy { it.family }
-            listOf(ModelFamily.ANTHROPIC, ModelFamily.OPENAI).forEach { family ->
+            listOf(ModelFamily.ANTHROPIC, ModelFamily.OPENAI, ModelFamily.GOOGLE).forEach { family ->
                 val entries = grouped[family].orEmpty()
                 if (entries.isEmpty()) return@forEach
 
                 item(key = "${family.name}-header") {
                     Text(
-                        text = if (family == ModelFamily.ANTHROPIC) "ANTHROPIC" else "OPENAI",
+                        text = family.name,
                         style = OverlineStyle,
                         color = palette.muted,
                         modifier = Modifier.padding(start = 24.dp, top = 18.dp, bottom = 6.dp)

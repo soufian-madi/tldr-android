@@ -12,7 +12,7 @@ import okhttp3.Request
 import java.util.concurrent.TimeUnit
 
 /**
- * Reads Nexos's live `/models` catalog. The picker keeps OpenAI and Anthropic models
+ * Reads Nexos's live `/models` catalog. The picker keeps OpenAI, Anthropic, and Google models
  * that support chat completions, using the exact model IDs returned by Nexos.
  */
 class ModelCatalogService {
@@ -69,6 +69,7 @@ class ModelCatalogService {
                 val family = when (entry.developer) {
                     "OpenAI" -> ModelFamily.OPENAI
                     "Anthropic" -> ModelFamily.ANTHROPIC
+                    "Google" -> ModelFamily.GOOGLE
                     else -> return@mapNotNull null
                 }
                 val canonicalId = entry.id!!

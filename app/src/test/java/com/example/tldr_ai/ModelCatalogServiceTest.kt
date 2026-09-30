@@ -18,9 +18,9 @@ class ModelCatalogServiceTest {
               {"id":"","developer":"OpenAI","endpoints":["chat_completion"]}
             ]}
         """.trimIndent())
-        assertEquals(listOf("GPT 6 Luna", "Claude Sonnet 5"), models.map { it.id })
-        assertEquals(listOf(ModelFamily.OPENAI, ModelFamily.ANTHROPIC), models.map { it.family })
-        assertEquals("Claude Sonnet 5", models.last().displayName)
+        assertEquals(listOf("GPT 6 Luna", "Claude Sonnet 5", "Gemini 3.5 Flash"), models.map { it.id })
+        assertEquals(listOf(ModelFamily.OPENAI, ModelFamily.ANTHROPIC, ModelFamily.GOOGLE), models.map { it.family })
+        assertEquals("Gemini 3.5 Flash", models.last().displayName)
         assertEquals(emptyList<String>(), models.last().aliases)
     }
 
