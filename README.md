@@ -69,9 +69,11 @@ git config core.hooksPath .githooks
 
 ## Switching AI providers
 
-The provider is isolated to a handful of files, so it can be swapped without touching the UI. The repo ships a [Claude Code skill](.claude/skills/switch-providers/SKILL.md) that encodes the full procedure: which files to edit and in what order, how to inspect a provider's real model catalog before writing the filter, and common pitfalls such as a stale API key name or a saved model id from the old provider.
+The provider is isolated to a handful of files, so it can be swapped without touching the UI. The repo ships an agent skill, [`switch-providers`](.agents/skills/switch-providers/SKILL.md), that encodes the full procedure: which files to edit and in what order, how to inspect a provider's real model catalog before writing the filter, and common pitfalls such as a stale API key name or a saved model id from the old provider.
 
-It was used for the moves Azure gateway → Nexos → Eden AI. Ask Claude Code to "switch the provider to X" and the skill takes over.
+It was used for the moves Azure gateway → Nexos → Eden AI. Ask your coding agent to "switch the provider to X" and the skill takes over.
+
+Skills follow the open `SKILL.md` format and live in [`.agents/skills/`](.agents/skills), which most agents read. Claude Code reads `.claude/skills`, which is a symlink to the same folder.
 
 ## Project structure
 

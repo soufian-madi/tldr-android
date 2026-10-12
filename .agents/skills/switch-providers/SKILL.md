@@ -38,7 +38,7 @@ commit first: it is the best template, and the diff is small.
    A stale key name is the usual cause of "API key not configured": the build
    silently bakes in an empty string. Check with
    `grep -n KEY local.properties | sed 's/=.*/=<redacted>/'`.
-5. Install: `.claude/skills/android-device/scripts/dev.sh install 2>&1 | grep -E "^e:|BUILD"`.
+5. Install: `.agents/skills/android-device/scripts/dev.sh install 2>&1 | grep -E "^e:|BUILD"`.
    Do not trigger summaries on the phone unless asked; they land in the user's history.
 6. Stale saved selection: ids differ between providers, so a model saved in
    `SettingsRepository` fails after a switch until the user re-picks.

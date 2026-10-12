@@ -96,7 +96,7 @@ their home screen, not test data.
 | Emulators / AVDs | **None configured.** `~/.android/avd/` is empty — there is no virtual device |
 | Screen | 1280 × 2856 |
 | App | `com.example.tldr_ai` / `.MainActivity` |
-| Helper script | `.claude/skills/android-device/scripts/dev.sh` |
+| Helper script | `.agents/skills/android-device/scripts/dev.sh` |
 
 The connection is wireless, so the device can drop off after a reboot or network
 change. `dev.sh devices` returning nothing means the user must re-enable
@@ -109,7 +109,7 @@ Reading a screenshot costs ~1.5–2k tokens and a slow round trip. A hierarchy g
 costs ~50 tokens and answers "what state is it in" more precisely.
 
 ```bash
-S=.claude/skills/android-device/scripts/dev.sh
+S=.agents/skills/android-device/scripts/dev.sh
 $S ui | grep -E 'text="(INFORMATIVE|SOME SPIN|PURE CLICKBAIT|DIDN.T WORK)"'
 ```
 
@@ -193,7 +193,7 @@ name to select and dismiss.
 ## Helper script
 
 ```bash
-S=.claude/skills/android-device/scripts/dev.sh
+S=.agents/skills/android-device/scripts/dev.sh
 
 $S devices               # list connected devices
 $S state                 # display on/off, awake, lockscreen, battery
@@ -215,7 +215,7 @@ $S clear [pkg]           # ✗ wipes the user's real history — needs explicit 
 ## Typical loop
 
 ```bash
-S=.claude/skills/android-device/scripts/dev.sh
+S=.agents/skills/android-device/scripts/dev.sh
 $S install 2>&1 | grep -E "^e:|BUILD"
 $S ui | grep -E 'content-desc="(Paste from clipboard|Get the TL;DR)"'   # find the composer
 $S tap 400 2620 && sleep 1 && $S type "https://example.com/article"

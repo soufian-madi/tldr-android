@@ -2,7 +2,7 @@
 .gradle
 .idea/
 .claude/*
-!.claude/skills/
+!.claude/skills
 /local.properties
 /.idea/caches
 /.idea/libraries
