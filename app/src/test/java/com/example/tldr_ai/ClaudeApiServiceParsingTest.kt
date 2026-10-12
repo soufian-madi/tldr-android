@@ -11,14 +11,14 @@ class ClaudeApiServiceParsingTest {
     private val service = ClaudeApiService()
 
     @Test
-    fun extractDelta_nexosChatAnswer() {
+    fun extractDelta_chatChatAnswer() {
         assertEquals("answer" to "Summary", service.extractDelta(
             """{"choices":[{"delta":{"content":"Summary"}}]}"""
         ))
     }
 
     @Test
-    fun extractDelta_nexosChatReasoningAndHousekeeping() {
+    fun extractDelta_chatChatReasoningAndHousekeeping() {
         assertEquals("reason" to "Thinking", service.extractDelta(
             """{"choices":[{"delta":{"content":null,"reasoning_content":"Thinking"}}]}"""
         ))

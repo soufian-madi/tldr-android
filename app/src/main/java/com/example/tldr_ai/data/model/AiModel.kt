@@ -4,13 +4,13 @@ package com.example.tldr_ai.data.model
  * Which gateway backend a model is routed to. Determines the endpoint, request body
  * shape, and whether reasoning text is available in the stream.
  */
-enum class ModelFamily { OPENAI, ANTHROPIC, GOOGLE }
+enum class ModelFamily { OPENAI, ANTHROPIC }
 
 /**
  * A model the user can pick.
  *
- * [id] is the exact Nexos catalog ID sent in the request body's model field
- * (for example `Claude Sonnet 5`).
+ * [id] is the Eden AI model id (`provider/model`) sent in the request body's model field
+ * (for example `anthropic/claude-sonnet-5-5`).
  *
  * [displayName] is shown in the picker, [aliases] are the other ids the gateway accepts for
  * the same model (including the canonical one) and are used to match a saved selection.
@@ -35,12 +35,11 @@ data class AiModel(
  */
 object Models {
     val FALLBACK = listOf(
-        AiModel("GPT 6 Luna", "GPT 6 Luna", ModelFamily.OPENAI),
-        AiModel("GPT 6.1 Sol", "GPT 6.1 Sol", ModelFamily.OPENAI),
-        AiModel("GPT 5.6 Terra", "GPT 5.6 Terra", ModelFamily.OPENAI),
-        AiModel("Claude Opus 5.5", "Claude Opus 5.5", ModelFamily.ANTHROPIC),
-        AiModel("Claude Sonnet 5", "Claude Sonnet 5", ModelFamily.ANTHROPIC),
-        AiModel("Gemini 3.5 Flash", "Gemini 3.5 Flash", ModelFamily.GOOGLE),
+        AiModel("openai/gpt-6-luna", "GPT-6 Luna", ModelFamily.OPENAI),
+        AiModel("openai/gpt-6.1-sol", "GPT-6.1 Sol", ModelFamily.OPENAI),
+        AiModel("anthropic/claude-haiku-5-5", "Claude Haiku 5.5", ModelFamily.ANTHROPIC),
+        AiModel("anthropic/claude-sonnet-5-5", "Claude Sonnet 5.5", ModelFamily.ANTHROPIC),
+        AiModel("anthropic/claude-opus-5-5", "Claude Opus 5.5", ModelFamily.ANTHROPIC),
     )
 
     val DEFAULT = FALLBACK.first()

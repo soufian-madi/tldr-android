@@ -40,7 +40,7 @@ class ModelCatalogRepository(context: Context) {
     }
 
     companion object {
-        private const val PREFS_NAME = "tldr_nexos_model_catalog"
+        private const val PREFS_NAME = "tldr_edenai_model_catalog"
         private const val KEY_CATALOG = "catalog"
     }
 }

@@ -133,14 +133,14 @@ class ClaudeApiService {
     /**
      * Streams a summary for the given article text using the selected model.
      *
-     * Both model families use Nexos's OpenAI-compatible chat completions endpoint.
+     * Both model families use Eden AI's OpenAI-compatible chat completions endpoint.
      * Reasoning deltas, when provided, are emitted live; the answer is accumulated
      * and parsed into a [SummaryResult] at the end.
      */
     fun summarizeStream(articleText: String, model: AiModel): Flow<StreamEvent> = flow {
-        val apiKey = BuildConfig.NEXOS_API_KEY
+        val apiKey = BuildConfig.EDENAI_API_KEY
         if (apiKey.isBlank()) {
-            emit(StreamEvent.Failure("API key not configured"))
+            emit(StreamEvent.Failure("No Eden AI API key in this build. Add EDENAI_API_KEY=... to local.properties and rebuild."))
             return@flow
         }
 
@@ -157,7 +157,6 @@ class ClaudeApiService {
             .url(endpoint)
             .addHeader("Content-Type", "application/json")
             .addHeader("Authorization", "Bearer $apiKey")
-            .addHeader("User-Agent", "Mozilla/5.0 TLDR-Android")
             .post(jsonBody.toRequestBody("application/json".toMediaType()))
             .build()
 

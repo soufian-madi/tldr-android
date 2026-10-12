@@ -65,7 +65,7 @@ verdict hues.
 - **UI:** Jetpack Compose with Material 3, fixed (non-dynamic) colour scheme
 - **Min SDK:** 30 (Android 11)
 - **Target SDK:** 36
-- **AI:** All requests go through Nexos (`https://api.nexos.ai/v1`), which exposes both
+- **AI:** All requests go through Eden AI (`https://api.edenai.run/v3`), which exposes both
   Claude and GPT models. The user picks one; the model list is fetched from the gateway catalog.
 - **Networking:** OkHttp (SSE streaming), Gson
 - **Persistence:** SharedPreferences (history + selected model)
@@ -102,7 +102,7 @@ app/src/main/java/com/example/tldr_ai/
 - **Streaming:** responses stream over SSE. Live reasoning text is shown faintly while it
   arrives, but only for OpenAI models — the gateway redacts Anthropic thinking.
 - **Model routing:** Both families use `/chat/completions` with Bearer authentication and
-  the exact Nexos catalog ID in the `model` field. Catalog is fetched from `/models`.
+  the Eden AI `provider/model` id in the `model` field. The public `/models` catalog is filtered to OpenAI GPT 6+ and Claude 5.5 (Haiku/Sonnet/Opus).
 - **History:** last 50 summaries in SharedPreferences, shared between the app and the overlay.
   Entries are collapsed to one scannable line and expand in place; single entries can be deleted.
 
@@ -155,9 +155,9 @@ app/src/main/java/com/example/tldr_ai/
 
 ## Setup
 
-1. Add your Nexos API key to `local.properties` (gitignored):
+1. Add your Eden AI API key to `local.properties` (gitignored):
 ```properties
-NEXOS_API_KEY=xxxxx
+EDENAI_API_KEY=xxxxx
 ```
 
 2. Build and run:
