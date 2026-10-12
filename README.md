@@ -3,23 +3,23 @@
 An Android app that summarizes articles with AI. The more clickbait, the shorter the answer.
 
 <p>
-  <img src="docs/screenshots/light-home.png" width="240" />
-  <img src="docs/screenshots/light-history.png" width="240" />
+  <img src="docs/screenshots/light-home.png" width="240" alt="Home screen, light theme" />
+  <img src="docs/screenshots/light-history.png" width="240" alt="History screen, light theme" />
 </p>
 <p>
-  <img src="docs/screenshots/dark-home.png" width="240" />
-  <img src="docs/screenshots/dark-history.png" width="240" />
+  <img src="docs/screenshots/dark-home.png" width="240" alt="Home screen, dark theme" />
+  <img src="docs/screenshots/dark-history.png" width="240" alt="History screen, dark theme" />
 </p>
 
 ## How it works
 
 Paste a URL or some text and the app scores how clickbaity it is, then sizes the summary to match.
 
-| Article | Response |
-|---|---|
-| Informative | Short paragraph or bullet points |
-| Moderately clickbaity | 2–3 sentences |
-| Highly clickbaity | One sentence |
+| Article               | Response                         |
+|-----------------------|----------------------------------|
+| Informative           | Short paragraph or bullet points |
+| Moderately clickbaity | 2–3 sentences                    |
+| Highly clickbaity     | One sentence                     |
 
 The score is shown as a verdict (Informative / Some spin / Pure clickbait) with a 12-segment meter instead of a percentage.
 
@@ -89,4 +89,4 @@ app/src/main/java/com/example/tldr_ai/
 └── ui/                        # Components, screens, ViewModel, theme
 ```
 
-See [AGENTS.md](CLAUDE.md) for design notes and project conventions.
+See [AGENTS.md](AGENTS.md) for design notes and project conventions.
