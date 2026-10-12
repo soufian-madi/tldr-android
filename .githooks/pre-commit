@@ -1,5 +1,5 @@
 #!/bin/sh
-# Blocks the commit if the JVM unit test suite fails. See CLAUDE.md "Git Conventions".
+# Blocks the commit if the JVM unit test suite fails. See AGENTS.md "Git Conventions".
 # Installed via: git config core.hooksPath .githooks
 
 echo "Running unit tests before commit..."

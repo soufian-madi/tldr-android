@@ -73,7 +73,7 @@ The provider is isolated to a handful of files, so it can be swapped without tou
 
 It was used for the moves Azure gateway → Nexos → Eden AI. Ask your coding agent to "switch the provider to X" and the skill takes over.
 
-Skills follow the open `SKILL.md` format and live in [`.agents/skills/`](.agents/skills), which most agents read. Claude Code reads `.claude/skills`, which is a symlink to the same folder.
+Skills follow the open `SKILL.md` format and live in [`.agents/skills/`](.agents/skills), which most agents read.
 
 ## Project structure
 
@@ -89,4 +89,4 @@ app/src/main/java/com/example/tldr_ai/
 └── ui/                        # Components, screens, ViewModel, theme
 ```
 
-See [CLAUDE.md](CLAUDE.md) for design notes and project conventions.
+See [AGENTS.md](CLAUDE.md) for design notes and project conventions.

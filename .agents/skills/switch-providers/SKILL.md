@@ -22,7 +22,7 @@ commit first: it is the best template, and the diff is small.
 | `data/model/AiModel.kt` | `FALLBACK` list (ids in the new provider's format), `ModelFamily` |
 | `ui/components/ModelPicker.kt` | family section headers, if families change |
 | `data/repository/ModelCatalogRepository.kt` | rename `PREFS_NAME` so the old provider's cached catalog is not reused |
-| `CLAUDE.md` | the AI / Model routing / Setup sections |
+| `AGENTS.md` | the AI / Model routing / Setup sections |
 | `app/src/test/.../ModelCatalogServiceTest.kt` | rewrite fixtures for the new catalog shape |
 
 ## Efficient workflow
